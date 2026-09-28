@@ -1,335 +1,47 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#031526"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="SWIMLIO"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"><title>SWIMLIO · Smart Swim Training</title><style>
-:root{
- --navy:#031526;--navy2:#06263c;--ocean:#073e5b;--cyan:#19d7f2;--blue:#168bff;
- --mint:#66f0d5;--ink:#081a2e;--mut:#6e7f91;--bg:#eef5f8;--card:#fff;--line:#dae8ef;
- --soft:#f4f9fb;--danger:#d84949;--shadow:0 18px 50px rgba(3,21,38,.12);
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{background:var(--navy);min-height:100%;overflow-x:hidden;scroll-behavior:smooth}
-body{margin:0;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;min-height:100dvh;overflow-x:hidden;overscroll-behavior-y:auto;-webkit-overflow-scrolling:touch}
-button,select,input{font:inherit}
-button{touch-action:manipulation}
-.appHeader{position:relative;overflow:hidden;background:radial-gradient(circle at 78% -15%,rgba(25,215,242,.34),transparent 36%),linear-gradient(145deg,var(--navy) 0%,#06314d 62%,#075473 100%);color:#fff;padding:calc(18px + env(safe-area-inset-top)) 20px 72px;min-height:188px}
-.appHeader:after{content:"";position:absolute;left:-8%;right:-8%;bottom:-54px;height:104px;background:var(--bg);border-radius:50% 50% 0 0/70% 70% 0 0}
-.headerInner{position:relative;z-index:1;max-width:980px;margin:auto;display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
-.logoLockup{display:flex;align-items:center;gap:12px}.logoMark{width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,var(--cyan),var(--blue));display:grid;place-items:center;box-shadow:0 10px 24px rgba(25,215,242,.22)}
-.logoMark svg{width:31px;height:31px}.brand{font-size:28px;font-weight:950;letter-spacing:.08em;line-height:1}.brand em{font-style:normal;color:var(--cyan)}
-.tagline{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#a9d9e7;margin-top:7px;font-weight:700}
-.headerBadge{font-size:12px;padding:8px 11px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);border-radius:999px;color:#d7f7ff;backdrop-filter:blur(10px)}
-.wrap{max-width:980px;margin:-50px auto 0;padding:0 18px calc(122px + env(safe-area-inset-bottom));position:relative;z-index:3}
-.navbar{position:fixed;z-index:60;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(560px,calc(100% - 24px));display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:rgba(3,21,38,.94);backdrop-filter:blur(18px);padding:7px;border:1px solid rgba(255,255,255,.1);border-radius:22px;box-shadow:0 18px 45px rgba(3,21,38,.32)}
-.navbar button{border:0;background:transparent;color:#9bb5c5;border-radius:16px;padding:10px 8px;font-weight:800;font-size:12px;cursor:pointer;min-height:48px}.navbar button.on{background:linear-gradient(135deg,#0b6fff,var(--cyan));color:#fff;box-shadow:0 6px 18px rgba(22,139,255,.27)}
-.grid{display:grid;grid-template-columns:minmax(300px,.82fr) minmax(360px,1.18fr);gap:18px;align-items:start}
-.card{background:rgba(255,255,255,.97);border:1px solid rgba(218,232,239,.9);border-radius:26px;padding:20px;box-shadow:var(--shadow)}
-.cardTitle{font-size:12px;text-transform:uppercase;letter-spacing:.16em;color:#4e7084;font-weight:900;margin:0 0 4px}.cardHeadline{font-size:25px;font-weight:920;margin:0 0 18px;letter-spacing:-.035em}
-.activeProfile{background:linear-gradient(135deg,#06263c,#0a4b68);color:#e9fbff;border:1px solid rgba(25,215,242,.22);border-radius:20px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(3,21,38,.16);font-size:13px}.activeProfile b{color:#fff}
-.field{margin:0 0 21px}.field h3{font-size:13px;margin:0 0 10px;color:#345468;letter-spacing:.01em}.choices{display:flex;gap:8px;flex-wrap:wrap}.choices button{border:1px solid #d8e5ec;background:#f7fbfc;color:#17374c;padding:10px 13px;border-radius:13px;cursor:pointer;font-weight:760;transition:.18s transform,.18s background,.18s box-shadow}.choices button:active{transform:scale(.97)}.choices button.on{background:linear-gradient(135deg,#0f7eff,#16badf);border-color:transparent;color:white;box-shadow:0 7px 18px rgba(15,126,255,.20)}
-.counter{display:grid;grid-template-columns:46px 1fr 46px;align-items:center;max-width:210px;background:#f5f9fb;border:1px solid #dce8ee;border-radius:15px;padding:4px}.counter button{height:42px;border:0;border-radius:11px;background:#fff;color:#0d5f91;font-size:22px;font-weight:800;box-shadow:0 3px 10px rgba(3,21,38,.06)}.counter strong{text-align:center;font-size:20px}
-.advanced{background:#f5fafc;border:1px solid #dbe8ee;border-radius:14px;padding:5px}.advanced select{width:100%;padding:11px;border:0;background:transparent;font-weight:700;color:#21445a;outline:none}
-.generate,.saveProfile,.startSession{width:100%;border:0;border-radius:16px;padding:15px 16px;background:linear-gradient(110deg,#086cff,#16c8e7);color:white;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 10px 26px rgba(8,108,255,.24)}
-.generate{position:relative;overflow:hidden}.generate:after{content:"";position:absolute;top:-60%;left:-30%;width:24%;height:220%;background:rgba(255,255,255,.24);transform:rotate(24deg);transition:.45s}.generate:hover:after{left:115%}
-.hidden{display:none!important}.hiddenView{display:none!important}.tag{display:inline-block;background:#e9f7fb;color:#086b94;padding:6px 9px;border-radius:999px;font-size:11px;font-weight:850;margin:3px}
-.result{min-height:360px}.result #empty{min-height:330px;display:grid;place-items:center;text-align:center;padding:35px}.emptyIcon{width:76px;height:76px;border-radius:24px;display:grid;place-items:center;background:linear-gradient(135deg,#dff8ff,#ecf3ff);font-size:34px;margin:auto auto 16px}.result h2{letter-spacing:-.03em}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}.stat{background:linear-gradient(145deg,#f2f9fc,#f8fbfd);border:1px solid #e2edf2;border-radius:15px;padding:12px}.stat small{display:block;color:#7890a0;font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:800}.stat b{font-size:18px;color:#0a2940}.timebreak{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px 0}.timebreak div{background:#f7fafc;border-radius:12px;padding:9px;text-align:center}.timebreak small{display:block;color:#8193a0;font-size:9px}.timebreak b{font-size:12px}.adapt{background:#ecfbf8;border:1px solid #c8f0e8;padding:10px 12px;border-radius:12px;font-size:12px;margin:10px 0;color:#24615a}
-.checks{font-size:12px;line-height:1.8;background:#f4f9fb;padding:11px 12px;border-radius:12px;margin-top:12px;border:1px solid #e4eef2}.help{border:1px solid #dbe8ee;border-radius:14px;margin:12px 0;background:#f8fbfc;overflow:hidden}.help summary,.exercise summary{cursor:pointer;list-style:none}.help summary{padding:12px;font-weight:850;color:#0b6f9b;font-size:13px}.help summary::-webkit-details-marker,.exercise summary::-webkit-details-marker{display:none}.helpbody{padding:0 12px 12px;font-size:12px;line-height:1.6;color:#466575}.scale{display:grid;gap:6px;margin-top:8px}.scale div{background:white;border:1px solid #e4edf1;border-radius:10px;padding:8px}
-.block{border:1px solid #dce8ed;border-radius:18px;overflow:hidden;margin:12px 0;background:#fff}.bh{padding:12px 14px;font-weight:900;background:linear-gradient(90deg,#edf8fc,#f7fbfd);display:flex;justify-content:space-between;gap:12px;color:#143c53}.exercise{border-top:1px solid #edf2f4}.exercise summary{padding:12px 14px}.exgrid{display:grid;grid-template-columns:90px 1fr;gap:9px;align-items:start}.exname{font-weight:820}.meta{font-size:11px;color:#79909f;margin-top:4px}.chev{float:right;color:#0f83b3;font-weight:900}.detail{padding:0 14px 14px 113px;font-size:12px;line-height:1.55}.how{background:#f6fafb;border-radius:12px;padding:10px;color:#345a6d}.transition{margin:8px 4px;padding:10px 12px;border-left:3px solid var(--cyan);background:#eefbfe;border-radius:9px;font-size:12px;color:#31596e}
-.feedback{margin-top:14px;padding:13px;border:1px solid #dce8ed;border-radius:16px;background:#f8fbfc}.feedback button{border:1px solid #d9e5eb;background:white;border-radius:11px;padding:9px 10px;margin:4px 2px;cursor:pointer}.actions{display:flex;gap:8px;margin-top:12px}.actions button,.miniBtn{flex:1;border:1px solid #dce7ec;border-radius:12px;padding:11px;background:white;font-weight:780;cursor:pointer;color:#315064}.danger{color:var(--danger)!important}
-.profileCard{border:1px solid #dce8ed;border-radius:17px;padding:14px;margin:10px 0;display:flex;justify-content:space-between;gap:12px;align-items:center;background:#f9fcfd}.profileCard.active{border-color:#1fcfe7;background:linear-gradient(135deg,#eefcff,#f4faff);box-shadow:0 8px 22px rgba(22,139,255,.08)}.profileActions{display:flex;gap:6px;flex-wrap:wrap}.profileActions button{border:1px solid #dce7ec;background:#fff;border-radius:9px;padding:7px 9px;font-weight:700;cursor:pointer}.profileName{font-size:17px;font-weight:900}.profileGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.profileGrid label{font-size:11px;color:#6e8391;font-weight:800}.profileGrid select,.profileGrid input{width:100%;margin-top:5px;padding:12px;border:1px solid #dce7ec;border-radius:11px;background:white;color:#183a4f}.historyItem{border:1px solid #dce8ed;border-radius:15px;padding:12px;margin:9px 0;font-size:12px;background:#fbfdfe}.historyActions{display:flex;gap:6px;margin-top:9px}.historySummary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.historySummary div{background:#f3f9fb;border-radius:13px;padding:11px;text-align:center}.historySummary b{display:block;font-size:17px}.historyEdit{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.historyEdit input,.historyEdit select{width:100%;padding:8px;border:1px solid #dce7ec;border-radius:8px}
-.welcomeOverlay{position:fixed;inset:0;background:radial-gradient(circle at 50% 0,rgba(25,215,242,.22),transparent 36%),linear-gradient(165deg,#021323,#052f48 70%,#07536e);z-index:100;overflow:auto;padding:calc(26px + env(safe-area-inset-top)) 20px calc(26px + env(safe-area-inset-bottom));color:white}.welcomeBox{max-width:520px;margin:20px auto}.welcomeBox .tagline{margin-bottom:28px}.welcomeBox h2{font-size:30px;margin:28px 0 6px;letter-spacing:-.04em}.welcomeBox>p{color:#a9cbd7!important}.welcomeProfile{width:100%;text-align:left;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:white;border-radius:20px;padding:16px;margin:10px 0;cursor:pointer;backdrop-filter:blur(10px);transition:.2s}.welcomeProfile:hover{transform:translateY(-1px);background:rgba(255,255,255,.12)}.welcomeProfile b{display:block;font-size:18px}.welcomeProfile small{color:#b9dae4}.welcomeBox .saveProfile{margin-top:12px}
-.sessionOverlay{position:fixed;inset:0;background:radial-gradient(circle at 50% 0,#0d5872,#031526 54%);z-index:80;overflow:auto;padding:calc(12px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom));color:#fff}.sessionCard{max-width:520px;min-height:calc(100vh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));margin:auto;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(238,248,251,.98));color:var(--ink);border:1px solid rgba(255,255,255,.2);border-radius:28px;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column}.sessionTop{display:flex;justify-content:space-between;align-items:center;gap:10px}.sessionTop button{border:0;background:#eaf2f6;border-radius:12px;width:38px;height:38px}.sessionStep{font-size:12px;color:#6d8390;margin-top:18px}.sessionTitle{font-size:26px;margin:12px 0 5px;letter-spacing:-.04em}.sessionPrescription{font-size:42px;font-weight:950;color:#0879bf;margin:8px 0;letter-spacing:-.05em}.sessionInfo{background:#f0f8fa;border-radius:16px;padding:15px;line-height:1.55;color:#355b6d}.sessionButtons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;padding:14px 0 calc(4px + env(safe-area-inset-bottom));position:sticky;bottom:0;background:linear-gradient(180deg,rgba(238,248,251,0),rgba(238,248,251,.96) 22%,rgba(238,248,251,.99) 100%);z-index:3}.sessionButtons button{border:0;border-radius:15px;padding:15px;font-weight:900;cursor:pointer;min-height:58px}.sessionButtons .primary{background:linear-gradient(135deg,#0a72ff,#14cbe8);color:#fff}.sessionButtons .secondary{background:#eaf1f4;color:#17394e}.restTimer{font-size:58px;font-weight:950;text-align:center;margin:28px 0;color:#0879bf;letter-spacing:-.06em}
-.debugInfo{display:none}
-@media(max-width:760px){
- .appHeader{min-height:174px;padding-left:16px;padding-right:16px}.headerBadge{display:none}.wrap{margin-top:-49px;padding-left:12px;padding-right:12px;padding-bottom:calc(126px + env(safe-area-inset-bottom))}.grid{grid-template-columns:1fr}.result{order:1}.card{border-radius:22px;padding:17px;box-shadow:0 11px 28px rgba(3,21,38,.10)}.brand{font-size:25px}.logoMark{width:44px;height:44px}.profileGrid,.historyEdit{grid-template-columns:1fr}.timebreak{grid-template-columns:1fr 1fr}.stats{grid-template-columns:1fr 1fr}.stats .stat:first-child{grid-column:span 2}.detail{padding-left:14px}.exgrid{grid-template-columns:82px 1fr}.navbar{bottom:calc(8px + env(safe-area-inset-bottom))}.sessionOverlay{padding-left:7px;padding-right:7px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.sessionCard{border-radius:24px;min-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}.profileCard{align-items:flex-start;flex-direction:column}
-}
-@media(min-width:761px){.navbar{position:sticky;top:12px;left:auto;bottom:auto;transform:none;width:100%;margin:0 0 18px;background:rgba(3,21,38,.96)}}
-@media print{.appHeader,.navbar,.field,.generate,.actions,.feedback,.help,.activeProfile{display:none!important}.wrap{margin:0;padding:0}.grid{display:block}.card{box-shadow:none;border:0}.result{display:block!important}}
-</style></head><body><header class="appHeader"><div class="headerInner"><div class="logoLockup"><div class="logoMark"><svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 22c7-8 14-10 22-6 8 4 14 3 24-5-5 11-14 17-24 14-9-3-14-3-22 2V22Z" fill="white"/><path d="M9 37c8-7 15-8 23-4 8 4 14 3 23-4-4 10-13 16-23 13-9-3-15-3-23 2v-7Z" fill="white" opacity=".82"/></svg></div><div><div class="brand">SWIM<em>LIO</em></div><div class="tagline">Planifica · Nada · Evoluciona</div></div></div><div class="headerBadge">Mobile Release Candidate</div></div></header>
-<main class="wrap">
-<nav class="navbar"><button class="on" data-view="today">◉<br>Hoy</button><button data-view="history">▥<br>Historial</button><button data-view="profile">◎<br>Perfiles</button></nav>
-<div id="todayView" class="view"><div id="activeProfileBanner" class="activeProfile"></div><div class="grid">
-<section class="card"><div class="cardTitle">Entrenamiento inteligente</div><h1 class="cardHeadline">¿Qué hacemos hoy?</h1>
-<div class="field"><h3>Tipo de entrenamiento</h3><div class="choices" data-key="type"><button data-v="Técnica">Técnica</button><button data-v="Resistencia">Resistencia</button><button data-v="Velocidad">Velocidad</button><button class="on" data-v="Mixto">Mixto</button></div></div>
-<div class="field"><h3>Duración</h3><div class="choices" data-key="duration"><button data-v="30">30</button><button data-v="45">45</button><button class="on" data-v="60">60 min</button><button data-v="75">75</button><button data-v="90">90</button></div></div>
-<div class="field"><h3>Enfoque <span style="font-weight:500;color:#8298a5">· opcional</span></h3><div class="advanced"><select id="focus"><option value="Auto">Automático — que SWIMLIO decida</option><option value="Corto">Series cortas / dinámico</option><option value="Medio">Series medias / equilibrado</option><option value="Largo">Series largas / aeróbico</option><option value="Escalera">Escaleras / pirámides</option></select></div></div>
-<div class="field"><h3>Material disponible hoy <span style="font-weight:500;color:#8298a5">· parte del perfil, puedes cambiarlo</span></h3><div class="choices multi"><button data-v="Tabla">Tabla</button><button data-v="Pull buoy">Pull</button><button data-v="Aletas">Aletas</button><button data-v="Palas">Palas</button><button data-v="Tubo frontal">Tubo</button></div></div>
-<details class="help" id="sessionOverride"><summary>⚙ Cambiar solo para esta sesión</summary><div class="helpbody"><p style="margin-top:0">Estos cambios no modifican tu perfil habitual.</p><div class="field"><h3>Modo</h3><div class="choices" data-key="mode"><button class="on" data-v="Grupo">Grupo</button><button data-v="Solo">Individual</button></div></div><div class="field" id="groupFields"><h3>N.º de nadadores</h3><div class="counter"><button id="minus" type="button">−</button><strong id="people">8</strong><button id="plus" type="button">+</button></div><h3 style="margin-top:14px">N.º de calles</h3><div class="counter"><button id="laneMinus" type="button">−</button><strong id="lanes">2</strong><button id="lanePlus" type="button">+</button></div></div><div class="field"><h3>Piscina</h3><div class="choices" data-key="pool"><button class="on" data-v="25">25 m</button><button data-v="50">50 m</button></div></div><button class="miniBtn" id="resetSessionProfile" type="button" style="width:100%">Restaurar datos del perfil</button></div></details>
-<button class="generate" id="generateBtn">Generar entrenamiento →</button>
-</section>
-<section class="card result"><div id="empty"><div><div class="emptyIcon">≈</div><h2>Tu próxima sesión empieza aquí</h2><p style="color:var(--mut);max-width:340px">Elige objetivo y duración. SWIMLIO se ocupa de los metros, descansos, material y progresión.</p></div></div><div id="workout" class="hidden"></div></section>
-</div></div>
-<div id="historyView" class="view hiddenView"><section class="card"><div class="cardTitle">Progreso</div><h2 class="cardHeadline" style="font-size:24px">Historial</h2><div id="historyContent"></div></section></div>
-<div id="profileView" class="view hiddenView"><section class="card"><div class="cardTitle">Tu espacio</div><h2 class="cardHeadline" style="font-size:24px">Perfiles</h2><p style="color:var(--mut);font-size:13px">El perfil guarda quién entrena y sus datos habituales. En “Hoy” solo eliges qué quieres entrenar.</p><div id="profilesList"></div><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><h3 id="profileFormTitle">Crear perfil</h3><div class="profileGrid"><label>Nombre<input id="pName" maxlength="30" placeholder="Ej. Ignacio o Grupo martes"></label><label>Nivel<select id="pLevel"><option>Iniciación</option><option>Intermedio</option><option>Avanzado</option></select></label><label>Piscina habitual<select id="pPool"><option value="25">25 m</option><option value="50">50 m</option></select></label><label>Modo habitual<select id="pMode"><option>Grupo</option><option>Solo</option></select></label><label>Ritmo cómodo 100 m (opcional)<input id="pPace" type="number" min="60" max="300" placeholder="Ej. 130 segundos"></label><label id="pPeopleWrap">Nadadores habituales<input id="pPeople" type="number" min="1" max="40" value="8"></label><label id="pLanesWrap">Calles habituales<input id="pLanes" type="number" min="1" max="10" value="2"></label></div><button class="saveProfile" id="saveProfile">Guardar perfil</button><button class="miniBtn" id="cancelProfileEdit" style="width:100%;margin-top:8px;display:none">Cancelar edición</button><div id="profileSaved" style="margin-top:10px;font-size:13px;color:var(--mut)"></div></section></div>
-</main>
-<div id="welcomeOverlay" class="welcomeOverlay hidden"><div class="welcomeBox"><div class="logoLockup"><div class="logoMark"><svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 22c7-8 14-10 22-6 8 4 14 3 24-5-5 11-14 17-24 14-9-3-14-3-22 2V22Z" fill="white"/><path d="M9 37c8-7 15-8 23-4 8 4 14 3 23-4-4 10-13 16-23 13-9-3-15-3-23 2v-7Z" fill="white" opacity=".82"/></svg></div><div><div class="brand">SWIM<em>LIO</em></div><div class="tagline">Planifica · Nada · Evoluciona</div></div></div><h2>¿Quién entrena hoy?</h2><p>Selecciona un perfil para cargar su nivel, piscina e historial.</p><div id="welcomeProfiles"></div><button class="saveProfile" id="welcomeNew">+ Crear un perfil</button></div></div><script>
-const state={mode:'Grupo',level:'Iniciación',type:'Mixto',duration:60,pool:25,people:8,lanes:2,gear:[],focus:'Auto'};
-const STORAGE_PREFIX='swimlio_';
-const LEGACY_KEYS=['aquaplan_profiles','aquaplan_active_profile','aquaplan_profile','aquaplan_history_v10','aquaplan_history','aquaplan_profile_seen_v10'];
-if(!localStorage.getItem(STORAGE_PREFIX+'clean_boot_v1')){
-  LEGACY_KEYS.forEach(k=>localStorage.removeItem(k));
-  localStorage.removeItem(STORAGE_PREFIX+'profiles');
-  localStorage.removeItem(STORAGE_PREFIX+'active_profile');
-  localStorage.removeItem(STORAGE_PREFIX+'history');
-  localStorage.setItem(STORAGE_PREFIX+'clean_boot_v1','1');
-}
-let profilesStore=JSON.parse(localStorage.getItem(STORAGE_PREFIX+'profiles')||'[]');
-let activeProfileId=localStorage.getItem(STORAGE_PREFIX+'active_profile')||null;
-let userProfile=profilesStore.find(p=>p.id===activeProfileId)||null;
-if(!userProfile){activeProfileId=null;}
-let allHistory=JSON.parse(localStorage.getItem(STORAGE_PREFIX+'history')||'[]');
-const history=new Proxy([], {get(t,p){const a=activeProfileId?allHistory.filter(h=>h.profileId===activeProfileId):[];const v=a[p];return typeof v==='function'?v.bind(a):v;}});
-function saveProfiles(){localStorage.setItem(STORAGE_PREFIX+'profiles',JSON.stringify(profilesStore));if(activeProfileId)localStorage.setItem(STORAGE_PREFIX+'active_profile',activeProfileId);else localStorage.removeItem(STORAGE_PREFIX+'active_profile')}
-function saveHistory(){localStorage.setItem(STORAGE_PREFIX+'history',JSON.stringify(allHistory))}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#031526">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SWIMLIO">
+  <title>SWIMLIO · Smart Swim Training</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
+  <link rel="stylesheet" href="./styles.css?v=4.0">
+</head>
+<body>
+  <header class="appHeader">
+    <div class="headerInner">
+      <div class="logoLockup">
+        <div class="logoMark" aria-hidden="true">
+          <svg viewBox="0 0 64 64"><path d="M9 22c7-8 14-10 22-6 8 4 14 3 24-5-5 11-14 17-24 14-9-3-14-3-22 2V22Z"/><path d="M9 37c8-7 15-8 23-4 8 4 14 3 23-4-4 10-13 16-23 13-9-3-15-3-23 2v-7Z" opacity=".8"/></svg>
+        </div>
+        <div><div class="brand">SWIM<em>LIO</em></div><div class="tagline">Planifica · Nada · Evoluciona</div></div>
+      </div>
+      <div class="versionBadge">4.0</div>
+    </div>
+  </header>
 
-if(userProfile?.level) state.level=userProfile.level;if(userProfile?.pool)state.pool=+userProfile.pool;if(userProfile?.mode)state.mode=userProfile.mode;if(userProfile?.people)state.people=+userProfile.people;if(userProfile?.lanes)state.lanes=+userProfile.lanes;
-let lastWorkout=null;
-document.getElementById('focus').addEventListener('change',e=>state.focus=e.target.value);
-document.querySelectorAll('.choices:not(.multi)').forEach(g=>g.addEventListener('click',e=>{if(e.target.tagName!=='BUTTON')return;g.querySelectorAll('button').forEach(b=>b.classList.remove('on'));e.target.classList.add('on');state[g.dataset.key]=isNaN(e.target.dataset.v)?e.target.dataset.v:+e.target.dataset.v;if(g.dataset.key==='mode')document.getElementById('groupFields').style.display=state.mode==='Grupo'?'block':'none';}));
-document.querySelector('.multi').addEventListener('click',e=>{if(e.target.tagName!=='BUTTON')return;e.target.classList.toggle('on');state.gear=[...document.querySelectorAll('.multi .on')].map(x=>x.dataset.v)});
-const peopleEl=document.getElementById('people'),lanesEl=document.getElementById('lanes');document.getElementById('minus').onclick=()=>{state.people=Math.max(1,state.people-1);peopleEl.textContent=state.people};document.getElementById('plus').onclick=()=>{state.people=Math.min(40,state.people+1);peopleEl.textContent=state.people};document.getElementById('laneMinus').onclick=()=>{state.lanes=Math.max(1,state.lanes-1);lanesEl.textContent=state.lanes};document.getElementById('lanePlus').onclick=()=>{state.lanes=Math.min(10,state.lanes+1);lanesEl.textContent=state.lanes};
-const ENGINE_VERSION='3.1 Profile-first RC';
-const SOURCE_NOTES=[
- {org:'U.S. Masters Swimming',use:'Estructura de sesión, intervalos, escaleras, recuperación y adaptación por ritmos.'},
- {org:'Swim England',use:'Progresión de sesiones, calentamiento, desarrollo técnico, parte principal y vuelta a la calma.'}
-];
-const trainingDB={
- purposes:['Técnica','Aeróbico base','Resistencia','Umbral controlado','Cambios de ritmo','Velocidad','Recuperación'],
- structures:[
-  {id:'reps_short',name:'Repeticiones cortas',lens:[25,50],types:['Mixto','Técnica','Velocidad','Recuperación']},
-  {id:'reps_mid',name:'Repeticiones medias',lens:[50,75,100,150,200],types:['Mixto','Técnica','Resistencia']},
-  {id:'reps_long',name:'Repeticiones largas',lens:[200,300,400,500,600,800],types:['Mixto','Resistencia']},
-  {id:'ladder_short',name:'Escalera corta',seq:[25,50,75,100,75,50,25],types:['Mixto','Velocidad']},
-  {id:'ladder_mid',name:'Escalera media',seq:[50,100,150,200,150,100,50],types:['Mixto','Resistencia']},
-  {id:'ladder_long',name:'Escalera larga',seq:[100,200,300,400,300,200,100],types:['Resistencia']},
-  {id:'descending',name:'Descendente',seq:[250,200,150,100,50],types:['Mixto','Resistencia']},
-  {id:'broken',name:'Nado fraccionado',lens:[100,200,400,800],types:['Mixto','Resistencia']},
-  {id:'negative',name:'Negative split',lens:[100,200,400,600],types:['Mixto','Resistencia']},
-  {id:'continuous',name:'Continuo',lens:[200,300,400,500,600,800,1000,1200],types:['Resistencia']},
-  {id:'mixed_combo',name:'Combinado',seq:[4,50,2,100,4,25],types:['Mixto','Velocidad']}
- ],
- drills:[
-  {id:'free_easy',name:'Crol suave y largo',stroke:'Crol',goal:'Economía',levels:['Iniciación','Intermedio','Avanzado'],gear:[],how:'Nada crol cómodo. Estira el brazo delante antes de iniciar la siguiente brazada y evita acelerar.'},
-  {id:'free_breathe',name:'Crol con respiración controlada',stroke:'Crol',goal:'Respiración',levels:['Iniciación','Intermedio','Avanzado'],gear:[],how:'Nada crol sin aguantar el aire. Expulsa aire dentro del agua y gira la cabeza solo lo necesario para inspirar.'},
-  {id:'free_sidekick',name:'Patada lateral de crol',stroke:'Crol',goal:'Posición corporal',levels:['Iniciación','Intermedio','Avanzado'],gear:['Aletas'],how:'Nada de lado con un brazo extendido. Haz varias patadas y cambia de lado con una brazada suave.'},
-  {id:'free_catchup',name:'Crol de alcance',stroke:'Crol',goal:'Coordinación',levels:['Iniciación','Intermedio','Avanzado'],gear:['Tubo frontal'],how:'Mantén un brazo delante hasta que el otro llegue cerca de él. Prioriza coordinación, no velocidad.'},
-  {id:'free_fist',name:'Crol con puños cerrados',stroke:'Crol',goal:'Sensibilidad',levels:['Intermedio','Avanzado'],gear:[],how:'Nada crol con las manos cerradas durante la parte indicada. Después abre las manos y nota mejor el apoyo.'},
-  {id:'free_pull',name:'Crol con pull buoy',stroke:'Crol',goal:'Brazada',levels:['Iniciación','Intermedio','Avanzado'],gear:['Pull buoy'],how:'Coloca el pull buoy entre los muslos y nada usando principalmente los brazos. Mantén el cuerpo alineado.'},
-  {id:'free_paddles',name:'Crol con palas controlado',stroke:'Crol',goal:'Fuerza específica',levels:['Intermedio','Avanzado'],gear:['Palas'],how:'Nada con palas a ritmo controlado. Si notas molestias en hombros o pierdes la trayectoria de la mano, retíralas.'},
-  {id:'free_snorkel',name:'Crol con tubo frontal',stroke:'Crol',goal:'Alineación',levels:['Intermedio','Avanzado'],gear:['Tubo frontal'],how:'Usa el tubo frontal para mantener la cabeza estable y concentrarte en alineación y brazada.'},
-  {id:'kick_board',name:'Patada de crol con tabla',stroke:'Crol',goal:'Piernas',levels:['Iniciación','Intermedio','Avanzado'],gear:['Tabla'],how:'Sujeta la tabla delante y bate las piernas desde la cadera. Mantén tobillos relajados y patada pequeña.'},
-  {id:'back_easy',name:'Espalda suave',stroke:'Espalda',goal:'Recuperación',levels:['Iniciación','Intermedio','Avanzado'],gear:[],how:'Nada espalda muy suave, mirando hacia arriba y manteniendo la cadera cerca de la superficie.'},
-  {id:'back_rotate',name:'Espalda con rotación',stroke:'Espalda',goal:'Rotación',levels:['Intermedio','Avanzado'],gear:['Aletas'],how:'Nada espalda pensando en rotar hombros y cadera juntos, sin balancear la cabeza.'},
-  {id:'breast_easy',name:'Braza suave',stroke:'Braza',goal:'Recuperación',levels:['Iniciación','Intermedio','Avanzado'],gear:[],how:'Nada braza relajada. Desliza brevemente después de cada patada y evita forzar el ritmo.'},
-  {id:'breast_timing',name:'Braza coordinación brazada-patada',stroke:'Braza',goal:'Coordinación',levels:['Intermedio','Avanzado'],gear:[],how:'Haz la brazada, respira, recoge las piernas, da la patada y termina en una posición estirada antes de repetir.'},
-  {id:'fly_body',name:'Ondulación de mariposa',stroke:'Mariposa',goal:'Ondulación',levels:['Avanzado'],gear:['Aletas'],how:'Trabaja la ondulación desde el pecho y la cadera. Usa aletas si están disponibles y mantén el movimiento fluido.'},
-  {id:'fly_single',name:'Mariposa a un brazo',stroke:'Mariposa',goal:'Coordinación',levels:['Avanzado'],gear:['Aletas'],how:'Nada mariposa usando un solo brazo durante el largo y alterna en la siguiente repetición. Prioriza ritmo y ondulación.'},
-  {id:'im_order',name:'Estilos en orden IM',stroke:'Estilos',goal:'Variedad',levels:['Avanzado'],gear:[],how:'Reparte la distancia entre mariposa, espalda, braza y crol, en ese orden.'}
- ],
- rules:{
-  'Iniciación':{fastAbility:'100–200 m',train:['Crol'],recovery:['Crol','Espalda','Braza'],mainMax:800,sprintMax:50,load:[800,1900]},
-  'Intermedio':{fastAbility:'200–400 m',train:['Crol','Espalda','Braza'],recovery:['Crol','Espalda','Braza'],mainMax:1200,sprintMax:100,load:[1400,3200]},
-  'Avanzado':{fastAbility:'400+ m',train:['Crol','Espalda','Braza','Mariposa','Estilos'],recovery:['Crol','Espalda','Braza'],mainMax:1600,sprintMax:100,load:[1800,5000]}
- }
-};
-// Expansión combinatoria: cada drill se convierte en variantes válidas por distancia/material.
-const expandedExerciseDB=[];
-for(const d of trainingDB.drills){
- const distances=d.goal==='Recuperación'?[25,50,100]:d.goal==='Fuerza específica'?[25,50,100,200]:[25,50,75,100,150,200];
- for(const level of d.levels) for(const distance of distances){
-  if(distance%state.pool!==0) continue;
-  expandedExerciseDB.push({...d,level,distance,key:`${d.id}_${level}_${distance}`});
- }
-}
-const library={
- warm:[{n:'Crol suave',how:'Nada a crol de forma cómoda. No busques velocidad. Mantén el cuerpo relajado y expulsa el aire dentro del agua.',feel:'Debes poder terminar cada repetición sin sensación de ahogo.'},{n:'25 m suave + 25 m algo más rápido',how:'Haz la primera mitad muy cómoda. En la segunda mitad aumenta un poco el ritmo, pero sin esprintar.',feel:'La segunda mitad se nota más activa, pero sigues controlando la respiración.'}],
- tech:[{n:'Crol respirando hacia los dos lados',how:'Nada a crol intentando alternar el lado por el que respiras. Gira la cabeza junto con el cuerpo; no la levantes hacia delante.',feel:'Prioriza hacerlo bien antes que hacerlo rápido.'},{n:'Patada de crol con tabla',how:'Sujeta la tabla con ambas manos y avanza solo dando patadas. Las piernas van casi estiradas y el movimiento nace desde la cadera.',feel:'Patada continua y pequeña; evita doblar mucho las rodillas.'},{n:'Crol con pausa delante',how:'Nada a crol, pero espera un instante con un brazo estirado delante antes de iniciar la siguiente brazada.',feel:'Busca calma, equilibrio y brazadas largas.'}],
- main:[{n:'Crol a ritmo constante',how:'Nada toda la repetición al mismo ritmo. El objetivo no es correr, sino mantener una velocidad cómoda sin pararte.',feel:'Respiras con esfuerzo moderado, pero sigues controlando la técnica.'},{n:'Crol progresivo',how:'Empieza el largo cómodo y aumenta la velocidad poco a poco. Los últimos metros son los más rápidos, sin llegar al máximo.',feel:'Cada parte debe sentirse un poco más rápida que la anterior.'},{n:'25 m cómodo + 25 m medio',how:'Nada los primeros 25 m cómodo. Tras el giro, aumenta claramente el ritmo durante los siguientes 25 m.',feel:'Debes notar el cambio de velocidad sin acabar exhausto.'}],
- speed:[{n:'Crol rápido',how:'Nada desde la pared a un ritmo fuerte. Mantén la brazada ordenada y no sacrifiques completamente la técnica por correr.',feel:'Terminas con respiración alta y necesitas el descanso indicado.'},{n:'Final rápido',how:'Empieza a ritmo medio. Cuando queden unos 10–15 m, acelera progresivamente hasta terminar casi a máxima velocidad.',feel:'Los últimos metros deben costar de verdad.'},{n:'Sprint corto',how:'Impúlsate desde la pared y nada muy rápido durante toda la repetición. No reserves energía para el final.',feel:'Es un esfuerzo casi máximo; el descanso posterior es parte del ejercicio.'}],
- cool:[{n:'Crol muy suave',how:'Nada despacio, con brazadas largas y relajadas. No importa la velocidad.',feel:'La respiración debe ir volviendo a la normalidad.'}]
-};
-const exerciseCatalog=[...library.warm,...library.tech,...library.main,...library.speed,...library.cool];
-const styleRules=trainingDB.rules;
-const styleExercises={
- Crol:{n:'Crol',how:'Nada a crol manteniendo una brazada ordenada. Expulsa el aire dentro del agua y gira la cabeza para respirar sin levantarla hacia delante.'},
- Espalda:{n:'Espalda',how:'Nada boca arriba. Mantén la cadera cerca de la superficie, patada continua y brazos alternos entrando alineados con el hombro.'},
- Braza:{n:'Braza',how:'Haz una brazada de brazos, recoge los talones, realiza la patada de braza y desliza un instante antes de repetir.'},
- Mariposa:{n:'Mariposa',how:'Nada mariposa con dos patadas de delfín por ciclo de brazos. Mantén el movimiento fluido y corta la repetición si la técnica se rompe.'},
- 'Estilos/IM':{n:'Estilos (IM)',how:'Reparte la distancia entre mariposa, espalda, braza y crol, en ese orden. En 100 m IM son 25 m de cada estilo.'},
- 'Espalda suave':{n:'Espalda suave para soltar',how:'Nada espalda muy relajada, sin buscar velocidad. Úsalo para recuperar y mover los hombros de otra forma.'},
- 'Braza suave':{n:'Braza suave para soltar',how:'Nada braza cómoda, con deslizamiento largo y sin forzar la patada. Es recuperación, no una serie rápida.'}
-};
-const patternCatalog=['repeticiones','progresivo','cambio de ritmo','escalera ascendente','escalera simétrica','pirámide','continuo','negative split','descendente'];
-const pick=a=>a[Math.floor(Math.random()*a.length)];
-const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
-const shuffle=a=>[...a].sort(()=>Math.random()-.5);
-const intens={low:['Baja','3–4/10'],lowmid:['Baja–Media','4–5/10'],mid:['Media','5–6/10'],high:['Alta','7–8/10'],max:['Muy alta','9–10/10'],easy:['Muy baja','1–2/10']};
-const profiles={
- 'Mixto':[
-  {name:'Corto y dinámico',desc:'Predominan 25 y 50 m, con cambios frecuentes de ritmo.',lens:[25,50],mainMax:100,w:[.16,.20,.28,.22,.10,.04]},
-  {name:'Equilibrado',desc:'Combina trabajo corto con repeticiones medias y puede incluir una escalera de hasta 200 m.',lens:[25,50,75,100,150,200],mainMax:200,ladder:true,w:[.17,.18,.31,.20,.10,.04]},
-  {name:'Mixto aeróbico',desc:'Da más peso al trabajo aeróbico e introduce 100–200 m sin perder técnica ni velocidad.',lens:[50,75,100,150,200],mainMax:200,ladder:true,w:[.15,.14,.43,.16,.08,.04]},
-  {name:'Técnica + final rápido',desc:'Más técnica al principio, una parte principal variable de hasta 150 m por repetición y velocidad al final.',lens:[25,50,75,100,150],mainMax:150,w:[.16,.27,.22,.20,.11,.04]}
- ],
- 'Técnica':[
-  {name:'Técnica variada',desc:'Muchos ejercicios cortos para trabajar coordinación, respiración y posición.',lens:[25,50],w:[.16,.34,.24,.16,.06,.04]},
-  {name:'Técnica aplicada',desc:'Alterna ejercicios técnicos con tramos de crol normal para aplicar lo aprendido.',lens:[25,50,75],w:[.17,.29,.29,.15,.06,.04]}
- ],
- 'Resistencia':[
-  {name:'Resistencia fraccionada',desc:'Acumula metros con 100–400 m por repetición, alternando tramos largos y recuperaciones.',lens:[50,100,150,200,300,400],mainMax:400,ladder:true,w:[.13,.10,.58,.10,.05,.04]},
-  {name:'Fondo progresivo',desc:'Concentra el volumen en una parte principal larga; según nivel y duración puede incluir 400, 600 u 800 m continuos.',lens:[50,100,200,300,400,600,800],mainMax:800,continuous:true,ladder:true,w:[.12,.10,.62,.08,.04,.04]}
- ],
- 'Velocidad':[
-  {name:'Velocidad corta',desc:'Muchos esfuerzos breves de 25–50 m con recuperación suficiente.',lens:[25,50],w:[.15,.14,.22,.31,.14,.04]},
-  {name:'Cambios de ritmo',desc:'Combina tramos controlados con aceleraciones y un final muy intenso.',lens:[25,50,75],w:[.16,.15,.25,.27,.13,.04]}
- ]
-};
-function targetRange(){
- const base={
-  'Iniciación':{30:[700,1100],45:[950,1450],60:[1200,1900],75:[1450,2200],90:[1700,2500]},
-  'Intermedio':{30:[1000,1500],45:[1400,2100],60:[1800,2700],75:[2200,3200],90:[2500,3800]},
-  'Avanzado':{30:[1200,1900],45:[1700,2600],60:[2200,3400],75:[2700,4100],90:[3200,5000]}
- };
- let pair=base[state.level][state.duration]||base[state.level][60];
- let mult={Técnica:.9,Recuperación:.78,Velocidad:.85,Mixto:1,Resistencia:1.08}[state.type]||1;
- const relevant=history.filter(h=>h.level===state.level&&h.type===state.type&&h.rating).slice(0,3);
- let adapt=1;if(relevant.length){const score=relevant.reduce((a,h)=>a+({'Muy fácil':1,'Bien':0,'Difícil':-1,'Demasiado':-2}[h.rating]||0),0);adapt=score>=2?1.06:score<=-3?.88:score<0?.94:1;}
- return [Math.round(pair[0]*mult*adapt/50)*50,Math.round(pair[1]*mult*adapt/50)*50];
-}
-function chooseTotal(){const [a,b]=targetRange(),step=state.pool===50?100:50;return Math.round(rand(a,b)/step)*step}
-function validLens(profile,kind){
- let ls=profile.lens.filter(x=>x%state.pool===0);
- if(kind==='speed') ls=[25,50,75,100].filter(x=>x%state.pool===0 && x<=(state.level==='Iniciación'?50:100));
- if(kind==='tech') ls=[25,50,75,100].filter(x=>x%state.pool===0 && x<=(state.level==='Iniciación'?100:100));
- if(kind==='warm'||kind==='cool') ls=[25,50,100,200].filter(x=>x%state.pool===0 && x<=(kind==='warm'?200:100));
- if(kind==='main'){
-   let cap=profile.mainMax||100;
-   if(state.type==='Resistencia'){
-     if(state.duration<=45) cap=Math.min(cap,400);
-     if(state.level==='Iniciación'&&state.duration<=60) cap=Math.min(cap,600);
-   }
-   ls=ls.filter(x=>x<=cap);
- }
- if(!ls.length)ls=[state.pool]; return ls;
-}
-function partition(total,profile){
- let vals=profile.w.map(w=>Math.round(total*w/state.pool)*state.pool),sum=vals.reduce((a,b)=>a+b,0); vals[2]+=total-sum;
- const mins=[state.pool*2,state.pool*2,state.pool*2,state.pool*2,state.pool,state.pool];
- for(let i=0;i<vals.length;i++){if(vals[i]<mins[i]){let d=mins[i]-vals[i];vals[i]+=d;vals[2]-=d}}
- return vals;
-}
-function longMainRow(meters,profile,rest,intkey){
- if(state.type!=='Resistencia' && state.type!=='Mixto') return null;
- // Escaleras: estructura profesional adaptada, sin obligar a que todas las sesiones sean largas.
- if(profile.ladder && meters>=600 && Math.random()<0.48){
-   const candidates=state.type==='Mixto' ? [[50,100,150,200,150,100,50],[100,150,200,150,100]] : [[100,200,300,200,100],[100,200,300,400],[200,300,400,300,200],[200,400,200]];
-   const valid=candidates.filter(seq=>seq.every(d=>d%state.pool===0) && seq.reduce((a,b)=>a+b,0)<=meters);
-   if(valid.length){const seq=pick(valid),used=seq.reduce((a,b)=>a+b,0);return {row:{sequence:seq,n:'Escalera de resistencia',how:'Nada las distancias en el orden indicado. Mantén un esfuerzo estable: no conviertas los primeros tramos en un sprint. En los tramos más largos busca un ritmo que puedas sostener.',feel:'Debes terminar cansado, pero sin que la técnica se deshaga. Los tramos de bajada deberían sentirse controlados.',rest:'20–30 s entre tramos',int:intens[intkey]},used};}
- }
- // Bloque continuo largo. 800 m solo aparece cuando el volumen y el objetivo lo justifican.
- if(state.type==='Resistencia' && profile.continuous && meters>=400 && Math.random()<0.55){
-   let caps=[800,600,400,300,200].filter(d=>d%state.pool===0 && d<=meters);
-   if(state.duration<=45)caps=caps.filter(d=>d<=400);
-   if(state.level==='Iniciación'&&state.duration<=60)caps=caps.filter(d=>d<=600);
-   if(caps.length){const d=pick(caps.slice(0,Math.min(3,caps.length)));return {row:{reps:1,d,n:'Crol continuo de resistencia',how:'Nada toda la distancia sin detenerte. Empieza más despacio de lo que crees necesario y busca mantener el mismo ritmo de principio a fin. Si pierdes completamente la técnica o no puedes controlar la respiración, baja el ritmo.',feel:'Es un esfuerzo aeróbico sostenido: debes trabajar, pero no ir al máximo. El objetivo es aguantar con regularidad.',rest:'45–60 s al terminar',int:intens[intkey]},used:d};}
- }
- return null;
-}
-function makeRows(meters,kind,rest,intkey,profile){
- let rows=[],left=meters,guard=0,choices=validLens(profile,kind);
- if(kind==='main'){
-   const special=longMainRow(left,profile,rest,intkey);
-   if(special){rows.push(special.row);left-=special.used;}
- }
- while(left>0&&guard++<30){
-  let possible=choices.filter(d=>d<=left); if(!possible.length)possible=[state.pool];
-  let d=pick(possible),maxRep=kind==='speed'?8:(kind==='main'&&d>=200?3:6),reps=Math.min(rand(1,maxRep),Math.floor(left/d));
-  if(kind!=='main' && reps<2 && left>=2*d) reps=2;
-  if(reps<1){d=state.pool;reps=Math.floor(left/d)}
-  let used=reps*d;if(!used)break;
-  let base={reps,d,...pick(library[kind]),rest,int:intens[intkey]};
-  if(['main','tech','speed','cool','warm'].includes(kind)){
-   let allowed=(kind==='cool'||kind==='warm')?styleRules[state.level].recovery:styleRules[state.level].train;
-   if(kind==='speed'&&state.level==='Iniciación')allowed=['Crol'];
-   const candidates=trainingDB.drills.filter(x=>x.levels.includes(state.level)&&allowed.includes(x.stroke)&&(kind!=='tech'||['Respiración','Posición corporal','Coordinación','Sensibilidad','Brazada','Rotación','Ondulación','Alineación'].includes(x.goal))&&(kind!=='cool'||['Recuperación','Economía'].includes(x.goal)));
-   if(candidates.length&&Math.random()<.72){
-    const drill=pick(candidates); base.n=drill.name; base.how=drill.how+' '+base.how;
-    if(drill.gear.length){const available=drill.gear.find(g=>state.gear.includes(g)); if(available){base.n+=' · '+available;} else if(kind==='tech'){base.how+=' Si no tienes el material indicado, realiza el ejercicio sin material manteniendo el mismo objetivo técnico.';}}
-   }else{
-    let sty=pick(allowed),sx=styleExercises[sty]; if(sx){base.n=(kind==='tech'?'Técnica de ':'')+sx.n;base.how=sx.how+' '+base.how;}
-   }
-   if(state.gear.length&&kind!=='cool'&&Math.random()<.22&&!base.n.includes('·')){let g=pick(state.gear); if(g==='Palas'&&state.level==='Iniciación')g=null; if(g){base.n+=' · '+g;base.how+=' Usa '+g.toLowerCase()+' solo si está disponible y resulta cómodo; si altera mucho la técnica, haz la repetición sin material.';}}
-  }
-  rows.push(base);left-=used;
- }
- if(left>0&&left%state.pool===0){rows.push({reps:left/state.pool,d:state.pool,...pick(library[kind]),rest,int:intens[intkey]});left=0}
- return {rows,meters:meters-left};
-}
-function mk(name,meters,kind,rest,intkey,profile){return {name,...makeRows(meters,kind,rest,intkey,profile)}}
-function profilePool(){let ps=profiles[state.type]; if(state.focus==='Auto')return ps; const f={Corto:['Corto','Velocidad','Técnica'],Medio:['Equilibrado','aplicada','fraccionada','Cambios'],Largo:['aeróbico','Fondo','Resistencia'],Escalera:['Equilibrado','aeróbico','fraccionada','Fondo']}[state.focus]||[]; const hit=ps.filter(p=>f.some(k=>p.name.includes(k)||p.desc.includes(k.toLowerCase()))); return hit.length?hit:ps;}
-function signature(profile,blocks,total){return [state.type,profile.name,total,...blocks.flatMap(b=>b.rows.map(r=>r.sequence?'L'+r.sequence.join('-'):(r.reps+'x'+r.d)))].join('|')}
-function similarity(sig){if(!history.length)return 0; const a=new Set(sig.split('|')); return Math.max(...history.slice(0,5).map(h=>{const b=new Set(h.signature.split('|'));const inter=[...a].filter(x=>b.has(x)).length;return inter/Math.max(a.size,b.size)}),0)}
-function validateWorkout(blocks,total){
- const issues=[],notes=[]; const all=blocks.flatMap(b=>b.rows); const names=all.map(r=>r.n||'').join(' ');
- if(state.level==='Iniciación'&&(names.includes('Mariposa')||names.includes('Estilos (IM)')))issues.push('Estilo no compatible con iniciación');
- if(state.level==='Iniciación'&&names.includes('Palas'))issues.push('Palas bloqueadas en iniciación');
- if(state.type==='Velocidad'&&all.some(r=>!r.sequence&&r.d>100))issues.push('Repetición demasiado larga para velocidad');
- if(total<targetRange()[0]-100||total>targetRange()[1]+100)issues.push('Volumen fuera del rango objetivo');
- if(state.mode==='Grupo'){const ppl=Math.ceil(state.people/state.lanes); notes.push(`${state.people} nadadores / ${state.lanes} calles = aprox. ${ppl} por calle`); if(ppl>6)notes.push('Grupo denso: conviene ampliar el intervalo de salida o usar más calles si es posible');}
- const load=Math.round(all.reduce((sum,r)=>{const m=r.sequence?r.sequence.reduce((a,b)=>a+b,0):(r.reps||1)*(r.d||0);const score=parseInt((r.int&&r.int[1])||'5')||5;return sum+m*(0.55+score/10)},0)); notes.push(`Carga interna estimada: ${load} puntos (solo comparativa entre sesiones SWIMLIO)`);
- if(state.gear.includes('Palas'))notes.push('Las palas añaden resistencia: prioriza técnica limpia y retíralas si generan molestias');
- notes.push(`Nivel ${state.level}: estilos de trabajo permitidos: ${styleRules[state.level].train.join(', ')}`);
- return {ok:issues.length===0,issues,notes};
-}
-function secFromRest(rest){const nums=(rest.match(/\d+/g)||['20']).map(Number);return nums.length>1?Math.round((nums[0]+nums[1])/2):nums[0]}
-function rpeOf(r){const m=(r.int&&r.int[1]||'5').match(/\d+/g)||['5'];return m.map(Number).reduce((a,b)=>a+b,0)/m.length}
-function swimPace100(r){const base={'Iniciación':150,'Intermedio':120,'Avanzado':95}[state.level];const rpe=rpeOf(r);let factor=1.18-(rpe-2)*.055;if((r.n||'').includes('Técnica')||(r.n||'').includes('Patada'))factor*=1.18;if((r.n||'').includes('Braza'))factor*=1.08;if((r.n||'').includes('Mariposa'))factor*=.95;return Math.max(55,base*factor)}
-function blockTiming(block){let swim=0,rests=0;for(const r of block.rows){const meters=r.sequence?r.sequence.reduce((a,b)=>a+b,0):(r.reps||1)*(r.d||0);swim+=meters/100*swimPace100(r);const nrests=r.sequence?Math.max(0,r.sequence.length-1):Math.max(0,(r.reps||1)-1);rests+=nrests*secFromRest(r.rest||'20 s')}return {swim,rests}}
-function transitionAfter(i,blocks){if(i>=blocks.length-1)return 0;const next=blocks[i+1].name;let s=next.includes('velocidad')?75:next.includes('Parte principal')?60:next.includes('Finisher')?50:next.includes('Vuelta')?20:40;if(state.mode==='Grupo'){const ppl=Math.ceil(state.people/state.lanes);s+=15+Math.max(0,ppl-4)*8}const gearChange=state.gear.length&&Math.random()<.35?15:0;return s+gearChange}
-function timingWorkout(blocks){let swim=0,rests=0,trans=0;const perBlock=[];blocks.forEach((b,i)=>{const t=blockTiming(b),tr=transitionAfter(i,blocks);swim+=t.swim;rests+=t.rests;trans+=tr;perBlock.push({...t,transition:tr,total:t.swim+t.rests+tr})});const org=state.mode==='Grupo'?Math.min(180,25+Math.ceil(state.people/state.lanes)*8):0;return {swim,rests,trans,org,total:swim+rests+trans+org,perBlock}}
-function fmtTime(sec){const m=Math.floor(sec/60),s=Math.round(sec%60);return s?`${m}:${String(s).padStart(2,'0')}`:`${m} min`}
-function loadInfo(blocks){let raw=0;blocks.forEach(b=>b.rows.forEach(r=>{const m=r.sequence?r.sequence.reduce((a,b)=>a+b,0):(r.reps||1)*(r.d||0);raw+=m*(.45+rpeOf(r)/10)}));const perMin=raw/Math.max(1,state.duration);let label=perMin<18?'Suave':perMin<25?'Moderada':perMin<33?'Alta':'Muy alta';return {raw:Math.round(raw),label}}
-function selectedGear(blocks){const names=blocks.flatMap(b=>b.rows.map(r=>r.n||'')).join(' ');return state.gear.filter(g=>names.includes(g))}
-function transitionText(sec,next){let why=next.includes('velocidad')?'Recupera bien antes del trabajo rápido':next.includes('Parte principal')?'Bebe, reagrupa y prepara la parte principal':next.includes('Vuelta')?'Transición breve antes de soltar':'Bebe y prepara el siguiente bloque';if(state.mode==='Grupo')why+='; aprovecha para reagrupar las calles';return `Descanso entre bloques: ${fmtTime(sec)} · ${why}.`}
-function buildCandidate(){let total=chooseTotal(),profile=pick(profilePool()),ms=partition(total,profile);const spec=[['Calentamiento','warm','15–20 s','low'],['Técnica','tech','15–25 s','lowmid'],['Parte principal','main','20–30 s','mid'],['Bloque de velocidad','speed','25–35 s','high'],['Finisher','speed','30–40 s','max'],['Vuelta a la calma','cool','15–20 s','easy']];let blocks=spec.map((x,i)=>mk(x[0],ms[i],x[1],x[2],x[3],profile));return {profile,blocks}}
-function generateTimed(){let best=null;for(let tries=0;tries<36;tries++){let c=buildCandidate(),actual=c.blocks.reduce((a,b)=>a+b.meters,0),timing=timingWorkout(c.blocks),delta=Math.abs(timing.total-state.duration*60),sig=signature(c.profile,c.blocks,actual),sim=similarity(sig),validation=validateWorkout(c.blocks,actual);let score=delta+sim*420+(validation.ok?0:900);if(!best||score<best.score)best={...c,actual,timing,delta,sig,sim,validation,score};if(validation.ok&&sim<=.75&&delta<=state.duration*60*.09)break}return best}
-function render(){
- if(!activeProfileId){document.getElementById('welcomeOverlay').classList.remove('hidden');document.querySelector('[data-view="profile"]').click();document.getElementById('profileSaved').textContent='Crea un perfil antes de generar tu primer entrenamiento.';return;}
- const g=generateTimed(),{profile,blocks,actual,timing,sig,sim,validation}=g,load=loadInfo(blocks),usedGear=selectedGear(blocks);const gear=usedGear.length?usedGear.join(', '):'Sin material';const rel=history.filter(h=>h.level===state.level&&h.type===state.type&&h.rating).slice(0,3);const adaptMsg=rel.length?('Ajuste por historial activo · últimas valoraciones: '+rel.map(x=>x.rating).join(', ')):'Sin ajuste por historial todavía';
- const distances=[...new Set(blocks.flatMap(b=>b.rows.flatMap(r=>r.sequence||[r.d])))].filter(Boolean).sort((a,b)=>a-b).join(' / ');
- const exerciseHTML=r=>{const total=r.sequence?r.sequence.reduce((a,b)=>a+b,0):r.reps*r.d;const title=r.sequence?r.sequence.join(' → ')+' m':`${r.reps} × ${r.d} m`;const explain=r.sequence?`Es una escalera: nada ${r.sequence.join(' m, después ')} m, descansando ${r.rest}. El bloque completo suma ${total} m.`:`Nada ${r.d} m, descansa ${r.rest} y repítelo hasta completar ${r.reps} ${r.reps===1?'vez':'veces'}.`;const lengths=r.sequence?r.sequence.map(d=>d/state.pool+' largo'+(d/state.pool===1?'':'s')).join(' → '):`${r.d/state.pool} largo${r.d/state.pool===1?'':'s'} por repetición`;return `<details class="exercise"><summary><div class="exgrid"><b>${title}</b><div><div class="exname">${r.n}<span class="chev">⌄</span></div><div class="meta">${total} m total · Intensidad ${r.int[0]} ${r.int[1]} · Descanso ${r.rest}</div></div></div></summary><div class="detail"><div class="how"><p><b>¿Qué tienes que hacer?</b> ${r.how}</p><p><b>¿Cómo se hace este bloque?</b> ${explain}</p><p><b>En esta piscina:</b> ${lengths}.</p><p><b>¿Qué debes notar?</b> ${r.feel}</p></div></div></details>`};
- lastWorkout={id:'h_'+Date.now(),profileId:activeProfileId,signature:sig,date:new Date().toISOString(),type:state.type,profile:profile.name,total:actual,level:state.level,duration:state.duration,estimatedSeconds:Math.round(timing.total),load:load.raw,mode:state.mode,lanes:state.lanes,blocks};
- const blockHTML=blocks.map((b,i)=>{const bt=timing.perBlock[i];const tr=i<blocks.length-1&&bt.transition?`<div class="transition">⏱ ${transitionText(bt.transition,blocks[i+1].name)}</div>`:'';return `<div class="block"><div class="bh"><span>${b.name}</span><span>${b.meters} m · ≈${fmtTime(bt.swim+bt.rests)}</span></div>${b.rows.map(exerciseHTML).join('')}</div>${tr}`}).join('');
- const ppl=state.mode==='Grupo'?Math.ceil(state.people/state.lanes):1;const gap=ppl>=7?'10–15 s':ppl>=5?'8–10 s':'5–8 s';
- document.getElementById('workout').innerHTML=`<h2 style="margin:0 0 6px">${state.type}: ${profile.name}</h2><span class="tag">${state.level}</span><span class="tag">${state.mode}</span>${state.mode==='Grupo'?`<span class="tag">${state.people} nadadores · ${state.lanes} calles</span>`:''}<span class="tag">Objetivo ${state.duration} min</span><span class="tag">Piscina ${state.pool} m</span><p style="color:var(--mut)"><b>Perfil:</b> ${profile.desc}</p><div class="stats"><div class="stat"><small>Distancia</small><b>${actual} m</b></div><div class="stat"><small>Duración real estimada</small><b>≈${fmtTime(timing.total)}</b></div><div class="stat"><small>Carga</small><b style="font-size:14px">${load.label}</b></div></div><div class="timebreak"><div><small>Nadando</small><b>${fmtTime(timing.swim)}</b></div><div><small>Descansos series</small><b>${fmtTime(timing.rests)}</b></div><div><small>Entre bloques</small><b>${fmtTime(timing.trans)}</b></div><div><small>${state.mode==='Grupo'?'Organización':'Preparación'}</small><b>${fmtTime(timing.org)}</b></div></div><div class="adapt">🧠 ${adaptMsg}</div><div class="checks"><b>Material:</b> ${gear}${state.mode==='Grupo'?`<br><b>Organización:</b> ${ppl} nadadores/calle · salidas cada ${gap}.`:''}</div><details class="help"><summary>ⓘ Cómo leer intensidad y descansos</summary><div class="helpbody"><b>4 × 50 m</b> significa nadar 50 m, descansar y repetir 4 veces. El descanso de cada ejercicio es individual. Los descansos azules entre bloques son adicionales y ya están incluidos en la duración estimada.<div class="scale"><div><b>Baja · 3–4/10:</b> cómodo; podrías mantenerlo varios minutos.</div><div><b>Media · 5–6/10:</b> esfuerzo claro, sostenible.</div><div><b>Alta · 7–8/10:</b> fuerte; mantener técnica requiere atención.</div><div><b>Muy alta · 9–10/10:</b> casi máximo; necesitas recuperar para repetir con calidad.</div></div></div></details>${blockHTML}<button class="startSession" id="startSession">▶ Empezar entrenamiento</button><div class="feedback"><b>¿Qué tal ha ido?</b><div><button data-rate="Muy fácil">😴 Muy fácil</button><button data-rate="Bien">🙂 Bien</button><button data-rate="Difícil">🥵 Difícil</button><button data-rate="Demasiado">☠️ Demasiado</button></div><small style="color:var(--mut)">Se guarda localmente y ya modifica la carga objetivo de próximas sesiones comparables.</small></div><details class="help"><summary>🧠 Engine ${ENGINE_VERSION}</summary><div class="helpbody">Generación por tiempo real: nado + descansos de serie + transiciones + organización. Selección inteligente de material, carga interna, control de similitud, reglas por nivel y organización por densidad de calle.</div></details><div class="actions"><button id="regen">↻ Generar otro</button><button onclick="window.print()">🖨 Imprimir</button></div>`;
- document.getElementById('empty').classList.add('hidden');document.getElementById('workout').classList.remove('hidden');
-}
-let sessionState=null,restInterval=null;
-function sessionItems(){if(!lastWorkout)return[];const items=[];lastWorkout.blocks.forEach((b,bi)=>{b.rows.forEach((r,ri)=>items.push({kind:'exercise',block:b.name,r,bi,ri}));if(bi<lastWorkout.blocks.length-1){const sec=transitionAfter(bi,lastWorkout.blocks);items.push({kind:'transition',block:b.name,sec,next:lastWorkout.blocks[bi+1].name})}});return items}
-function openSession(){sessionState={items:sessionItems(),i:0};drawSession()}
-function closeSession(){clearInterval(restInterval);document.getElementById('sessionOverlay')?.remove()}
-function drawSession(){clearInterval(restInterval);let old=document.getElementById('sessionOverlay');if(old)old.remove();const it=sessionState.items[sessionState.i];if(!it){closeSession();alert('Entrenamiento completado. ¡Buen trabajo!');return}const ov=document.createElement('div');ov.id='sessionOverlay';ov.className='sessionOverlay';let body='';if(it.kind==='exercise'){const r=it.r,total=r.sequence?r.sequence.reduce((a,b)=>a+b,0):(r.reps||1)*(r.d||0),pres=r.sequence?r.sequence.join(' → ')+' m':`${r.reps} × ${r.d} m`;body=`<div class="sessionStep">${it.block} · Paso ${sessionState.i+1}/${sessionState.items.length}</div><div class="sessionTitle">${r.n}</div><div class="sessionPrescription">${pres}</div><div class="sessionInfo"><b>${total} m total</b><br>Intensidad: ${r.int[0]} ${r.int[1]}<br>Descanso entre repeticiones: ${r.rest}<br><br>${r.how}</div>`}else{body=`<div class="sessionStep">Transición · Paso ${sessionState.i+1}/${sessionState.items.length}</div><div class="sessionTitle">Descanso entre bloques</div><div class="restTimer" id="restTimer">${fmtClock(it.sec)}</div><div class="sessionInfo">Siguiente: <b>${it.next}</b><br>${transitionText(it.sec,it.next)}</div>`}ov.innerHTML=`<div class="sessionCard"><div class="sessionTop"><b>🌊 SWIMLIO · Modo sesión</b><button id="closeSession">✕</button></div>${body}<div class="sessionButtons"><button class="secondary" id="prevSession">← Anterior</button><button class="primary" id="nextSession">${it.kind==='transition'?'Saltar / siguiente →':'✓ Hecho →'}</button></div></div>`;document.body.appendChild(ov);document.getElementById('closeSession').onclick=closeSession;document.getElementById('prevSession').onclick=()=>{sessionState.i=Math.max(0,sessionState.i-1);drawSession()};document.getElementById('nextSession').onclick=()=>{sessionState.i++;drawSession()};if(it.kind==='transition')startCountdown(it.sec)}
-function fmtClock(s){return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}
-function startCountdown(sec){let left=sec;restInterval=setInterval(()=>{left--;const el=document.getElementById('restTimer');if(el)el.textContent=fmtClock(Math.max(0,left));if(left<=0){clearInterval(restInterval);if(el)el.textContent='¡Listo!'}},1000)}
-document.getElementById('generateBtn').onclick=render;document.querySelector('.result').addEventListener('click',e=>{if(e.target.id==='regen')render();if(e.target.id==='startSession')openSession();if(e.target.dataset.rate&&lastWorkout){const saved={...lastWorkout,rating:e.target.dataset.rate};allHistory.unshift(saved);const mine=allHistory.filter(h=>h.profileId===activeProfileId);if(mine.length>30){const ids=new Set(mine.slice(30).map(h=>h.id));allHistory=allHistory.filter(h=>!ids.has(h.id));}saveHistory();e.target.parentElement.innerHTML='<b>Guardado:</b> '+e.target.dataset.rate+' ✓';}});
+  <main class="wrap">
+    <nav class="navbar" aria-label="Navegación principal">
+      <button class="on" data-view="today"><span>◉</span>Hoy</button>
+      <button data-view="plan"><span>▦</span>Semana</button>
+      <button data-view="history"><span>▥</span>Historial</button>
+      <button data-view="profiles"><span>◎</span>Perfiles</button>
+    </nav>
 
-function syncProfileUI(){if(!userProfile)return;document.getElementById('pLevel').value=userProfile.level||state.level;document.getElementById('pPool').value=String(userProfile.pool||state.pool);document.getElementById('pMode').value=userProfile.mode||state.mode;document.getElementById('pPace').value=userProfile.pace100||'';document.getElementById('pPeople').value=userProfile.people||8;document.getElementById('pLanes').value=userProfile.lanes||2;updateProfileGroupFields()}
-function renderHistory(){const el=document.getElementById('historyContent');const mine=allHistory.filter(h=>h.profileId===activeProfileId);if(!activeProfileId){el.innerHTML='<p style="color:var(--mut)">Crea o selecciona un perfil para ver su historial.</p>';return}if(!mine.length){el.innerHTML='<p style="color:var(--mut)">Todavía no hay entrenamientos en este perfil.</p>';return}const meters=mine.reduce((a,h)=>a+(h.total||0),0),mins=Math.round(mine.reduce((a,h)=>a+(h.estimatedSeconds||0),0)/60);el.innerHTML=`<div class="historySummary"><div><b>${mine.length}</b><small>sesiones</small></div><div><b>${meters.toLocaleString('es-ES')} m</b><small>metros</small></div><div><b>${mins} min</b><small>tiempo</small></div></div>`+mine.map(h=>`<div class="historyItem" data-hid="${h.id}"><b>${h.type} · ${h.profile}</b><br>${h.level} · ${h.total} m · ≈${fmtTime(h.estimatedSeconds||0)}<br><span class="tag">${h.rating||'Sin valorar'}</span> <small>${new Date(h.date).toLocaleDateString('es-ES')}</small><div class="historyActions"><button class="miniBtn" data-edit="${h.id}">Editar</button><button class="miniBtn danger" data-delete="${h.id}">Eliminar</button></div></div>`).join('')}
-function editHistory(id){const h=allHistory.find(x=>x.id===id);if(!h)return;const box=document.querySelector(`[data-hid="${id}"]`);box.innerHTML=`<b>Editar entrenamiento</b><div class="historyEdit"><label>Fecha<input id="eDate" type="date" value="${h.date.slice(0,10)}"></label><label>Metros<input id="eMeters" type="number" min="0" step="25" value="${h.total}"></label><label>Duración real (min)<input id="eMins" type="number" min="1" value="${Math.round((h.estimatedSeconds||0)/60)}"></label><label>Valoración<select id="eRating"><option ${h.rating==='Muy fácil'?'selected':''}>Muy fácil</option><option ${h.rating==='Bien'?'selected':''}>Bien</option><option ${h.rating==='Difícil'?'selected':''}>Difícil</option><option ${h.rating==='Demasiado'?'selected':''}>Demasiado</option></select></label></div><div class="historyActions"><button class="miniBtn" id="saveHistEdit">Guardar cambios</button><button class="miniBtn" id="cancelHistEdit">Cancelar</button></div>`;document.getElementById('saveHistEdit').onclick=()=>{h.date=new Date(document.getElementById('eDate').value+'T12:00:00').toISOString();h.total=+document.getElementById('eMeters').value;h.estimatedSeconds=+document.getElementById('eMins').value*60;h.rating=document.getElementById('eRating').value;saveHistory();renderHistory()};document.getElementById('cancelHistEdit').onclick=renderHistory}
-document.getElementById('historyContent').addEventListener('click',e=>{if(e.target.dataset.edit)editHistory(e.target.dataset.edit);if(e.target.dataset.delete){if(confirm('¿Eliminar este entrenamiento del historial?')){allHistory=allHistory.filter(h=>h.id!==e.target.dataset.delete);saveHistory();renderHistory()}}});
-let editingProfileId=null;
-function applyProfile(){userProfile=profilesStore.find(p=>p.id===activeProfileId)||null;if(!userProfile){activeProfileId=null;document.getElementById('activeProfileBanner').innerHTML='Sin perfil activo · crea uno para empezar';return;}state.level=userProfile.level||state.level;state.pool=+userProfile.pool||state.pool;state.mode=userProfile.mode||state.mode;state.people=+(userProfile.people||8);state.lanes=+(userProfile.lanes||2);state.gear=[];const groupText=state.mode==='Grupo'?` · ${state.people} nadadores · ${state.lanes} calles`:'';document.getElementById('activeProfileBanner').innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div>Perfil activo: <b>${userProfile.name}</b><br><small>${userProfile.level} · ${userProfile.pool} m · ${userProfile.mode}${groupText}</small></div><button id="editActiveProfile" class="miniBtn" style="flex:0 0 auto;padding:8px 10px">Editar</button></div>`;document.querySelectorAll('[data-key="pool"] button').forEach(b=>b.classList.toggle('on',+b.dataset.v===state.pool));document.querySelectorAll('[data-key="mode"] button').forEach(b=>b.classList.toggle('on',b.dataset.v===state.mode));document.getElementById('groupFields').classList.toggle('hidden',state.mode!=='Grupo');document.getElementById('people').textContent=state.people;document.getElementById('lanes').textContent=state.lanes;document.querySelectorAll('.multi button').forEach(b=>b.classList.toggle('on',state.gear.includes(b.dataset.v)));}
+    <section id="todayView" class="view"></section>
+    <section id="planView" class="view hiddenView"></section>
+    <section id="historyView" class="view hiddenView"></section>
+    <section id="profilesView" class="view hiddenView"></section>
+  </main>
 
-function selectProfile(id){activeProfileId=id;saveProfiles();applyProfile();renderHistory();renderProfiles();document.getElementById('welcomeOverlay').classList.add('hidden')}
-function renderProfiles(){const list=document.getElementById('profilesList');list.innerHTML=profilesStore.length?profilesStore.map(p=>`<div class="profileCard ${p.id===activeProfileId?'active':''}"><div><div class="profileName">${p.name}</div><small>${p.level} · ${p.pool} m · ${p.mode}${p.mode==='Grupo'?` · ${p.people||8} nad. · ${p.lanes||2} calles`:''}${p.id===activeProfileId?' · ACTIVO':''}</small></div><div class="profileActions">${p.id!==activeProfileId?`<button data-usep="${p.id}">Usar</button>`:''}<button data-editp="${p.id}">Editar</button>${profilesStore.length?`<button class="danger" data-delp="${p.id}">Eliminar</button>`:''}</div></div>`).join(''):'<div class="profileCard"><div><div class="profileName">Aún no hay perfiles</div><small>Crea tu primer perfil debajo. SWIMLIO empezará con el historial vacío.</small></div></div>';document.getElementById('welcomeProfiles').innerHTML=profilesStore.length?profilesStore.map(p=>`<button class="welcomeProfile" data-welcome="${p.id}"><b>${p.name}</b><small>${p.level} · ${p.pool} m · ${p.mode}</small></button>`).join(''):'<p style="color:#b9dae4">No hay perfiles creados todavía.</p>'}
-function updateProfileGroupFields(){const isGroup=document.getElementById('pMode').value==='Grupo';document.getElementById('pPeopleWrap').style.display=isGroup?'block':'none';document.getElementById('pLanesWrap').style.display=isGroup?'block':'none'}
-function clearProfileForm(){editingProfileId=null;document.getElementById('profileFormTitle').textContent='Crear perfil';document.getElementById('pName').value='';document.getElementById('pLevel').value='Iniciación';document.getElementById('pPool').value='25';document.getElementById('pMode').value='Solo';document.getElementById('pPace').value='';document.getElementById('pPeople').value='8';document.getElementById('pLanes').value='2';updateProfileGroupFields();document.getElementById('cancelProfileEdit').style.display='none'}
-function editProfile(id){const p=profilesStore.find(x=>x.id===id);if(!p)return;editingProfileId=id;document.getElementById('profileFormTitle').textContent='Editar perfil';document.getElementById('pName').value=p.name;document.getElementById('pLevel').value=p.level;document.getElementById('pPool').value=p.pool;document.getElementById('pMode').value=p.mode;document.getElementById('pPace').value=p.pace100||'';document.getElementById('pPeople').value=p.people||8;document.getElementById('pLanes').value=p.lanes||2;updateProfileGroupFields();document.getElementById('cancelProfileEdit').style.display='block'}
-
-document.getElementById('profilesList').addEventListener('click',e=>{if(e.target.dataset.usep)selectProfile(e.target.dataset.usep);if(e.target.dataset.editp)editProfile(e.target.dataset.editp);if(e.target.dataset.delp&&confirm('¿Eliminar este perfil y su historial?')){const id=e.target.dataset.delp;profilesStore=profilesStore.filter(p=>p.id!==id);allHistory=allHistory.filter(h=>h.profileId!==id);if(activeProfileId===id)activeProfileId=profilesStore[0]?.id||null;saveProfiles();saveHistory();applyProfile();renderProfiles();renderHistory();if(!activeProfileId)document.getElementById('welcomeOverlay').classList.remove('hidden')}});
-document.getElementById('welcomeProfiles').addEventListener('click',e=>{const b=e.target.closest('[data-welcome]');if(b)selectProfile(b.dataset.welcome)});document.getElementById('welcomeNew').onclick=()=>{document.getElementById('welcomeOverlay').classList.add('hidden');document.querySelector('[data-view="profile"]').click();clearProfileForm()};
-document.getElementById('saveProfile').onclick=()=>{const name=document.getElementById('pName').value.trim()||'Mi perfil';const data={name,level:document.getElementById('pLevel').value,pool:+document.getElementById('pPool').value,mode:document.getElementById('pMode').value,pace100:+document.getElementById('pPace').value||null,people:+document.getElementById('pPeople').value||8,lanes:+document.getElementById('pLanes').value||2};if(editingProfileId){Object.assign(profilesStore.find(p=>p.id===editingProfileId),data)}else{const p={id:'p_'+Date.now(),...data};profilesStore.push(p);activeProfileId=p.id}saveProfiles();applyProfile();renderProfiles();clearProfileForm();document.getElementById('profileSaved').textContent='Perfil guardado ✓';document.getElementById('welcomeOverlay').classList.add('hidden');document.querySelector('[data-view="today"]').click()};document.getElementById('cancelProfileEdit').onclick=clearProfileForm;
-document.getElementById('pMode').addEventListener('change',updateProfileGroupFields);document.getElementById('activeProfileBanner').addEventListener('click',e=>{if(e.target.id==='editActiveProfile'&&activeProfileId){document.querySelector('[data-view="profile"]').click();editProfile(activeProfileId)}});document.getElementById('resetSessionProfile').onclick=()=>{applyProfile();document.getElementById('sessionOverride').open=false};
-document.querySelectorAll('.navbar button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.navbar button').forEach(x=>x.classList.toggle('on',x===b));['today','history','profile'].forEach(v=>document.getElementById(v+'View').classList.toggle('hiddenView',v!==b.dataset.view));if(b.dataset.view==='history')renderHistory();if(b.dataset.view==='profile')renderProfiles()});
-updateProfileGroupFields();renderProfiles();applyProfile();renderHistory();if(!activeProfileId||profilesStore.length>1){document.getElementById('welcomeOverlay').classList.remove('hidden')}
-
-if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
-</script></body></html>
+  <div id="overlayRoot"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js?v=4.0"></script>
+</body>
+</html>
