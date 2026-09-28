@@ -147,6 +147,56 @@ for(const sel of ['button[data-view="today"]','button[data-view="plan"]','button
 noDuplicateIds(w,"Final navigation");
 assert.deepEqual(errors,[],"Runtime errors were captured: "+errors.join(" | "));
 
+
+
+// Extended beginner engine regression matrix
+function resetToBeginnerSessionCount(count,pool=25,duration=60){
+  const ps=JSON.parse(w.localStorage.getItem("swimlio_profiles"));
+  ps[0].level="Iniciación";ps[0].pool=pool;ps[0].goal="General";ps[0].daysPerWeek=3;
+  w.localStorage.setItem("swimlio_profiles",JSON.stringify(ps));
+  const hs=[];
+  for(let i=0;i<count;i++){
+    hs.push({id:"seed_"+i,profileId:ps[0].id,date:new Date(Date.now()-i*86400000).toISOString(),type:"Mixto",total:1000,actualMinutes:45,rating:"Bien",completed:true,level:"Iniciación",pool});
+  }
+  w.localStorage.setItem("swimlio_history",JSON.stringify(hs));
+  w.eval("profiles=safeParse(localStorage.getItem(KEYS.profiles),[]);history=safeParse(localStorage.getItem(KEYS.history),[]);normalizeProfiles();applyProfile();state.pool="+pool+";state.duration="+duration+";state.type='Mixto';state.focus='Auto';state.energy='Normal';lastWorkout=null;renderToday();");
+}
+function inspectGenerated(){
+  click(w,"#generate");
+  const raw=w.eval("JSON.stringify(lastWorkout)");
+  return JSON.parse(raw);
+}
+function allRows(workout){return workout.blocks.flatMap(b=>b.rows)}
+function assertWorkoutRules(workout,{stage,pool,duration}){
+  const limits={30:[600,900],45:[850,1200],60:[1100,1600],75:[1300,1800],90:[1500,2000]}[duration];
+  assert.ok(workout.total>=limits[0]&&workout.total<=limits[1],stage+" "+duration+"m total out of bounds: "+workout.total);
+  for(const r of allRows(workout)){
+    if(r.distance)assert.equal(r.distance%pool,0,stage+" repetition not divisible by pool: "+r.distance);
+    if(r.sequence)for(const d of r.sequence)assert.equal(d%pool,0,stage+" ladder distance not divisible by pool: "+d);
+    if(stage==="inicio"){
+      assert.ok(!r.distance||r.distance<=150,"First 3 beginner sessions must cap repetitions at 150 m, got "+r.distance);
+      if(r.distance===150)assert.ok(r.reps<=2,"Beginner start must cap 150 m at 2 reps");
+      if(r.distance===100)assert.ok(r.reps<=4,"Beginner start must cap 100 m at 4 reps");
+      if(r.sequence)assert.ok(Math.max(...r.sequence)<=100,"Beginner start ladder must cap at 100 m");
+    }else if(stage==="adaptacion"){
+      assert.ok(!r.distance||r.distance<=200,"Beginner adaptation rep over 200 m");
+      if(r.distance===200)assert.ok(r.reps<=1,"Beginner adaptation must not repeat 200 m");
+    }else{
+      assert.ok(!r.distance||r.distance<=200,"Consolidated beginner rep over 200 m");
+      if(r.distance===200)assert.ok(r.reps<=2,"Consolidated beginner must cap 200 m at 2 reps");
+    }
+  }
+}
+for(const pool of [25,50]){
+  for(const duration of [30,45,60,75,90]){
+    for(const cfg of [{count:0,stage:"inicio"},{count:4,stage:"adaptacion"},{count:8,stage:"consolidado"}]){
+      resetToBeginnerSessionCount(cfg.count,pool,duration);
+      for(let n=0;n<20;n++)assertWorkoutRules(inspectGenerated(),{stage:cfg.stage,pool,duration});
+    }
+  }
+}
+console.log("Beginner regression matrix: 600 generated workouts — PASS");
+
 console.log("SWIMLIO 4.5 QA PASS");
 console.log("Beginner 60-min generated volume:",total+" m");
 console.log("Core flows + adaptive plan + pause/skip + favorites/share + backup UI + 4-week history — PASS");
