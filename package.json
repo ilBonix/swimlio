@@ -1,0 +1,12 @@
+{
+  "name": "swimlio",
+  "version": "4.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "qa": "node --check app.js && node tests/qa.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "24.1.3"
+  }
+}
