@@ -220,6 +220,39 @@ function buildBlock(name,cat,target){
   const meters=rows.reduce((a,r)=>a+r.total,0);
   return {name,cat,rows,meters};
 }
+function enforceVolumeBounds(blocks){
+  const limits=VOLUME_LIMITS[activeProfile.level]?.[state.duration]||[state.pool,99999];
+  const max=limits[1],min=limits[0];
+  const recalc=()=>blocks.forEach(b=>b.meters=b.rows.reduce((a,r)=>a+r.total,0));
+  recalc();
+  let total=()=>blocks.reduce((a,b)=>a+b.meters,0),guard=0;
+  const order=["speed","main","tech","warm","cool"];
+  while(total()>max&&guard++<200){
+    let changed=false;
+    for(const cat of order){
+      const b=blocks.find(x=>x.cat===cat);if(!b)continue;
+      for(let i=b.rows.length-1;i>=0;i--){
+        const r=b.rows[i];
+        if(r.sequence)continue;
+        if(r.reps>1){r.reps--;r.total-=r.distance;changed=true;break}
+        if(r.reps===1&&r.distance>state.pool){r.distance-=state.pool;r.total-=state.pool;changed=true;break}
+      }
+      if(changed)break;
+    }
+    if(!changed)break;
+    recalc();
+  }
+  guard=0;
+  while(total()<min&&guard++<100){
+    const b=blocks.find(x=>x.cat==="main")||blocks.find(x=>x.cat==="tech")||blocks[0];
+    const r=b?.rows?.find(x=>!x.sequence);
+    if(!r)break;
+    r.reps++;r.total+=r.distance;recalc();
+    if(total()>max){r.reps--;r.total-=r.distance;recalc();break}
+  }
+  return blocks.filter(b=>b.meters>0);
+}
+
 function transitionSeconds(from,to,index){
   let base=from.cat==="speed"?45:from.cat==="main"?35:25;
   if(state.mode==="Grupo")base+=15;
@@ -249,7 +282,7 @@ function generateWorkout(){
     ["Vuelta a la calma","cool",parts.cool]
   ];
   if(state.energy==="Cansado"&&state.type==="Velocidad"){defs[3][2]*=.7;defs[1][2]*=1.15;defs[4][2]*=1.15}
-  const blocks=defs.map((x,i)=>buildBlock(x[0],x[1],roundTo(total*x[2],state.pool))).filter(b=>b.meters>0);
+  const blocks=enforceVolumeBounds(defs.map((x,i)=>buildBlock(x[0],x[1],roundTo(total*x[2],state.pool))).filter(b=>b.meters>0));
   const transitions=blocks.slice(0,-1).map((b,i)=>transitionSeconds(b,blocks[i+1],i));
   const timing=estimateWorkout(blocks,transitions);
   const actual=blocks.reduce((a,b)=>a+b.meters,0);
