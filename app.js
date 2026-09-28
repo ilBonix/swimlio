@@ -1,6 +1,6 @@
 "use strict";
 
-const VERSION="4.5.2";
+const VERSION="4.5.3";
 const KEYS={
   profiles:"swimlio_profiles",
   active:"swimlio_active_profile",
@@ -80,17 +80,6 @@ const VOLUME_LIMITS={
     30:[1200,1700],45:[1600,2300],60:[2000,3000],75:[2500,3500],90:[3000,4200]
   }
 };
-const BEGINNER_TARGET_BANDS={
-  inicio:{
-    30:[600,750],45:[850,1050],60:[1100,1350],75:[1300,1550],90:[1500,1750]
-  },
-  adaptacion:{
-    30:[650,825],45:[900,1125],60:[1200,1450],75:[1400,1650],90:[1600,1850]
-  },
-  consolidado:{
-    30:[700,900],45:[950,1200],60:[1300,1600],75:[1500,1800],90:[1700,2000]
-  }
-};
 const ENERGY={
   "Cansado":{volume:.88,intensity:-1,label:"Recupera y prioriza técnica"},
   "Normal":{volume:1,intensity:0,label:"Carga normal"},
@@ -163,28 +152,18 @@ function effectivePace(rpe=5){
   return base*mult;
 }
 function targetMeters(){
-  const limits=VOLUME_LIMITS[activeProfile.level]?.[state.duration]||VOLUME_LIMITS[activeProfile.level]?.[60]||[1000,2000];
-  const energyFactor=ENERGY[state.energy].volume;
-  const goalFactor=(GOALS[activeProfile.goal]||GOALS.General).volume;
-  const adaptiveFactor=recentAdaptation();
-
-  if(activeProfile.level==="Iniciación"){
-    const stage=beginnerStage();
-    const band=BEGINNER_TARGET_BANDS[stage]?.[state.duration]||limits;
-    const span=band[1]-band[0];
-    const randomBase=band[0]+Math.random()*span;
-    const typeFactor=state.type==="Técnica"?.94:state.type==="Velocidad"?.96:state.type==="Resistencia"?1.03:1;
-    const adjusted=randomBase*energyFactor*goalFactor*adaptiveFactor*typeFactor;
-    return roundTo(clamp(adjusted,band[0],band[1]),state.pool);
-  }
-
   const swimShare=state.mode==="Grupo"?.64:.72;
   const paceBased=(state.duration*60*swimShare/profilePace())*100;
+  const limits=VOLUME_LIMITS[activeProfile.level]?.[state.duration]||VOLUME_LIMITS[activeProfile.level]?.[60]||[1000,2000];
+  const energyFactor=ENERGY[state.energy].volume;
   const midpoint=(limits[0]+limits[1])/2;
   const paceAdjusted=midpoint+(paceBased-midpoint)*0.35;
-  const adjusted=paceAdjusted*energyFactor*goalFactor*adaptiveFactor;
-  return roundTo(clamp(adjusted,limits[0],limits[1]),state.pool);
+  const goalFactor=(GOALS[activeProfile.goal]||GOALS.General).volume;
+  const adaptiveFactor=recentAdaptation();
+  const energyAdjusted=paceAdjusted*energyFactor*goalFactor*adaptiveFactor;
+  return roundTo(clamp(energyAdjusted,limits[0],limits[1]),state.pool);
 }
+
 function eligibleDrills(cat){
   return DRILLS.filter(d=>d.cat===cat&&d.levels.includes(activeProfile.level)&&(!d.gear.length||d.gear.every(g=>state.gear.includes(g))));
 }
@@ -263,55 +242,36 @@ function buildBlock(name,cat,target){
   const meters=rows.reduce((a,r)=>a+r.total,0);
   return {name,cat,rows,meters};
 }
-function enforceVolumeBounds(blocks,target){
+function enforceVolumeBounds(blocks){
   const limits=VOLUME_LIMITS[activeProfile.level]?.[state.duration]||[state.pool,99999];
-  const hardMax=limits[1],hardMin=limits[0];
-  const tolerance=state.pool;
-  const max=Math.min(hardMax,target+tolerance);
-  const min=Math.max(hardMin,target-tolerance);
+  const max=limits[1],min=limits[0];
   const recalc=()=>blocks.forEach(b=>b.meters=b.rows.reduce((a,r)=>a+r.total,0));
-  const total=()=>blocks.reduce((a,b)=>a+b.meters,0);
   recalc();
-
-  let guard=0;
+  let total=()=>blocks.reduce((a,b)=>a+b.meters,0),guard=0;
   const order=["speed","main","tech","warm","cool"];
-  while(total()>max&&guard++<300){
+  while(total()>max&&guard++<200){
     let changed=false;
     for(const cat of order){
       const b=blocks.find(x=>x.cat===cat);if(!b)continue;
       for(let i=b.rows.length-1;i>=0;i--){
         const r=b.rows[i];
         if(r.sequence)continue;
-        if(r.reps>1&&total()-r.distance>=min){
-          r.reps--;r.total-=r.distance;changed=true;break;
-        }
-        if(r.reps===1&&r.distance>state.pool&&total()-state.pool>=min){
-          r.distance-=state.pool;r.total-=state.pool;changed=true;break;
-        }
+        if(r.reps>1){r.reps--;r.total-=r.distance;changed=true;break}
+        if(r.reps===1&&r.distance>state.pool){r.distance-=state.pool;r.total-=state.pool;changed=true;break}
       }
       if(changed)break;
     }
     if(!changed)break;
     recalc();
   }
-
   guard=0;
   while(total()<min&&guard++<100){
-    const need=min-total();
     const b=blocks.find(x=>x.cat==="main")||blocks.find(x=>x.cat==="tech")||blocks[0];
-    if(!b)break;
-    const reps=Math.min(8,Math.max(1,Math.ceil(need/state.pool)));
-    const drill=pick(eligibleDrills(b.cat).length?eligibleDrills(b.cat):eligibleDrills("main"));
-    const rpe=clamp((drill?.rpe||5)+ENERGY[state.energy].intensity,3,7);
-    const add=Math.min(reps*state.pool,hardMax-total());
-    const actualReps=Math.max(1,Math.floor(add/state.pool));
-    b.rows.push({
-      name:drill?.n||"Crol suave controlado",cat:b.cat,distance:state.pool,reps:actualReps,total:actualReps*state.pool,
-      rpe,rest:restFor(b.cat,rpe),how:drill?.how||"Nada cómodo y con técnica limpia.",feel:drill?.feel||"Control y respiración estable.",gear:drill?.gear||[]
-    });
-    recalc();
+    const r=b?.rows?.find(x=>!x.sequence);
+    if(!r)break;
+    r.reps++;r.total+=r.distance;recalc();
+    if(total()>max){r.reps--;r.total-=r.distance;recalc();break}
   }
-
   return blocks.filter(b=>b.meters>0);
 }
 
@@ -344,7 +304,7 @@ function generateWorkout(){
     ["Vuelta a la calma","cool",parts.cool]
   ];
   if(state.energy==="Cansado"&&state.type==="Velocidad"){defs[3][2]*=.7;defs[1][2]*=1.15;defs[4][2]*=1.15}
-  const blocks=enforceVolumeBounds(defs.map((x,i)=>buildBlock(x[0],x[1],roundTo(total*x[2],state.pool))).filter(b=>b.meters>0),total);
+  const blocks=enforceVolumeBounds(defs.map((x,i)=>buildBlock(x[0],x[1],roundTo(total*x[2],state.pool))).filter(b=>b.meters>0));
   const transitions=blocks.slice(0,-1).map((b,i)=>transitionSeconds(b,blocks[i+1],i));
   const timing=estimateWorkout(blocks,transitions);
   const actual=blocks.reduce((a,b)=>a+b.meters,0);
