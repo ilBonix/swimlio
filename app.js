@@ -64,6 +64,18 @@ const LEVEL={
   "Intermedio":{pace:120,minRep:25,maxRep:400,strokes:["Crol","Espalda","Braza"],rpe:[3,9]},
   "Avanzado":{pace:95,minRep:25,maxRep:800,strokes:["Crol","Espalda","Braza","Mariposa","Estilos"],rpe:[3,10]}
 };
+
+const VOLUME_LIMITS={
+  "Iniciación":{
+    30:[600,900],45:[850,1200],60:[1100,1600],75:[1300,1800],90:[1500,2000]
+  },
+  "Intermedio":{
+    30:[900,1300],45:[1200,1700],60:[1500,2200],75:[1800,2600],90:[2200,3000]
+  },
+  "Avanzado":{
+    30:[1200,1700],45:[1600,2300],60:[2000,3000],75:[2500,3500],90:[3000,4200]
+  }
+};
 const ENERGY={
   "Cansado":{volume:.88,intensity:-1,label:"Recupera y prioriza técnica"},
   "Normal":{volume:1,intensity:0,label:"Carga normal"},
@@ -120,9 +132,13 @@ function effectivePace(rpe=5){
 }
 function targetMeters(){
   const swimShare=state.mode==="Grupo"?.64:.72;
-  const base=(state.duration*60*swimShare/profilePace())*100;
-  const levelAdj=activeProfile.level==="Iniciación"?.94:activeProfile.level==="Avanzado"?1.05:1;
-  return roundTo(base*ENERGY[state.energy].volume*levelAdj,state.pool);
+  const paceBased=(state.duration*60*swimShare/profilePace())*100;
+  const limits=VOLUME_LIMITS[activeProfile.level]?.[state.duration]||VOLUME_LIMITS[activeProfile.level]?.[60]||[1000,2000];
+  const energyFactor=ENERGY[state.energy].volume;
+  const midpoint=(limits[0]+limits[1])/2;
+  const paceAdjusted=midpoint+(paceBased-midpoint)*0.35;
+  const energyAdjusted=paceAdjusted*energyFactor;
+  return roundTo(clamp(energyAdjusted,limits[0],limits[1]),state.pool);
 }
 function eligibleDrills(cat){
   return DRILLS.filter(d=>d.cat===cat&&d.levels.includes(activeProfile.level)&&(!d.gear.length||d.gear.every(g=>state.gear.includes(g))));
@@ -130,9 +146,9 @@ function eligibleDrills(cat){
 function chooseDistance(cat,target){
   const level=activeProfile.level,pool=state.pool,focus=state.focus;
   let opts;
-  if(cat==="warm"||cat==="cool")opts=level==="Iniciación"?[25,50,100,150]:[50,100,150,200];
+  if(cat==="warm"||cat==="cool")opts=level==="Iniciación"?[25,50,100]:[50,100,150,200];
   else if(cat==="tech")opts=level==="Iniciación"?[25,50]:[25,50,100];
-  else if(cat==="speed")opts=[25,50,100];
+  else if(cat==="speed")opts=level==="Iniciación"?[25,50]:[25,50,100];
   else if(state.type==="Resistencia")opts=level==="Iniciación"?[50,100,150,200]:level==="Intermedio"?[100,150,200,300,400]:[100,200,300,400,600,800];
   else opts=level==="Iniciación"?[50,100,150,200]:level==="Intermedio"?[50,100,150,200,300]:[50,100,150,200,300,400];
   opts=opts.filter(d=>d%pool===0&&d<=Math.max(pool,target));
@@ -154,7 +170,7 @@ function createSeries(cat,target){
 }
 function ladderFor(target){
   const pool=state.pool;
-  const options=activeProfile.level==="Iniciación"?[[50,100,150,100,50],[25,50,75,100,75,50,25]]:[[50,100,150,200,150,100,50],[100,200,300,200,100]];
+  const options=activeProfile.level==="Iniciación"?[[25,50,75,100,75,50,25],[50,100,150,100,50]]:[[50,100,150,200,150,100,50],[100,200,300,200,100]];
   const valid=options.filter(a=>a.every(x=>x%pool===0));
   if(!valid.length)return null;
   let seq=pick(valid);
