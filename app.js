@@ -80,6 +80,17 @@ const VOLUME_LIMITS={
     30:[1200,1700],45:[1600,2300],60:[2000,3000],75:[2500,3500],90:[3000,4200]
   }
 };
+const BEGINNER_TARGET_BANDS={
+  inicio:{
+    30:[600,750],45:[850,1050],60:[1100,1350],75:[1300,1550],90:[1500,1750]
+  },
+  adaptacion:{
+    30:[650,825],45:[900,1125],60:[1200,1450],75:[1400,1650],90:[1600,1850]
+  },
+  consolidado:{
+    30:[700,900],45:[950,1200],60:[1300,1600],75:[1500,1800],90:[1700,2000]
+  }
+};
 const ENERGY={
   "Cansado":{volume:.88,intensity:-1,label:"Recupera y prioriza técnica"},
   "Normal":{volume:1,intensity:0,label:"Carga normal"},
@@ -152,16 +163,27 @@ function effectivePace(rpe=5){
   return base*mult;
 }
 function targetMeters(){
-  const swimShare=state.mode==="Grupo"?.64:.72;
-  const paceBased=(state.duration*60*swimShare/profilePace())*100;
   const limits=VOLUME_LIMITS[activeProfile.level]?.[state.duration]||VOLUME_LIMITS[activeProfile.level]?.[60]||[1000,2000];
   const energyFactor=ENERGY[state.energy].volume;
-  const midpoint=(limits[0]+limits[1])/2;
-  const paceAdjusted=midpoint+(paceBased-midpoint)*0.35;
   const goalFactor=(GOALS[activeProfile.goal]||GOALS.General).volume;
   const adaptiveFactor=recentAdaptation();
-  const energyAdjusted=paceAdjusted*energyFactor*goalFactor*adaptiveFactor;
-  return roundTo(clamp(energyAdjusted,limits[0],limits[1]),state.pool);
+
+  if(activeProfile.level==="Iniciación"){
+    const stage=beginnerStage();
+    const band=BEGINNER_TARGET_BANDS[stage]?.[state.duration]||limits;
+    const span=band[1]-band[0];
+    const randomBase=band[0]+Math.random()*span;
+    const typeFactor=state.type==="Técnica"?.94:state.type==="Velocidad"?.96:state.type==="Resistencia"?1.03:1;
+    const adjusted=randomBase*energyFactor*goalFactor*adaptiveFactor*typeFactor;
+    return roundTo(clamp(adjusted,band[0],band[1]),state.pool);
+  }
+
+  const swimShare=state.mode==="Grupo"?.64:.72;
+  const paceBased=(state.duration*60*swimShare/profilePace())*100;
+  const midpoint=(limits[0]+limits[1])/2;
+  const paceAdjusted=midpoint+(paceBased-midpoint)*0.35;
+  const adjusted=paceAdjusted*energyFactor*goalFactor*adaptiveFactor;
+  return roundTo(clamp(adjusted,limits[0],limits[1]),state.pool);
 }
 function eligibleDrills(cat){
   return DRILLS.filter(d=>d.cat===cat&&d.levels.includes(activeProfile.level)&&(!d.gear.length||d.gear.every(g=>state.gear.includes(g))));
@@ -241,9 +263,12 @@ function buildBlock(name,cat,target){
   const meters=rows.reduce((a,r)=>a+r.total,0);
   return {name,cat,rows,meters};
 }
-function enforceVolumeBounds(blocks){
+function enforceVolumeBounds(blocks,target){
   const limits=VOLUME_LIMITS[activeProfile.level]?.[state.duration]||[state.pool,99999];
-  const max=limits[1],min=limits[0];
+  const hardMax=limits[1],hardMin=limits[0];
+  const tolerance=state.pool;
+  const max=Math.min(hardMax,target+tolerance);
+  const min=Math.max(hardMin,target-tolerance);
   const recalc=()=>blocks.forEach(b=>b.meters=b.rows.reduce((a,r)=>a+r.total,0));
   recalc();
   let total=()=>blocks.reduce((a,b)=>a+b.meters,0),guard=0;
@@ -303,7 +328,7 @@ function generateWorkout(){
     ["Vuelta a la calma","cool",parts.cool]
   ];
   if(state.energy==="Cansado"&&state.type==="Velocidad"){defs[3][2]*=.7;defs[1][2]*=1.15;defs[4][2]*=1.15}
-  const blocks=enforceVolumeBounds(defs.map((x,i)=>buildBlock(x[0],x[1],roundTo(total*x[2],state.pool))).filter(b=>b.meters>0));
+  const blocks=enforceVolumeBounds(defs.map((x,i)=>buildBlock(x[0],x[1],roundTo(total*x[2],state.pool))).filter(b=>b.meters>0),total);
   const transitions=blocks.slice(0,-1).map((b,i)=>transitionSeconds(b,blocks[i+1],i));
   const timing=estimateWorkout(blocks,transitions);
   const actual=blocks.reduce((a,b)=>a+b.meters,0);
