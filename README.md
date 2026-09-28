@@ -74,6 +74,18 @@ SWIMLIO currently works as an installable PWA.
 
 The app can then run in standalone mode and keeps profile/history data locally on the device.
 
+## Install on Android
+
+SWIMLIO can also be installed as a PWA on Android.
+
+1. Open **https://ilbonix.github.io/swimlio/** in Chrome.
+2. Open the browser menu (⋮).
+3. Tap **Install app** or **Add to Home screen**.
+4. Confirm the installation.
+5. Open SWIMLIO from its new app icon.
+
+Depending on the Android version and browser, the wording may vary slightly. Once installed, SWIMLIO opens in standalone mode and stores profile/history data locally on the device.
+
 ## Privacy
 
 SWIMLIO currently has no account system and no backend.
