@@ -150,48 +150,62 @@ assert.deepEqual(errors,[],"Runtime errors were captured: "+errors.join(" | "));
 
 
 // Extended beginner engine regression matrix
-function resetToBeginnerSessionCount(count,pool=25,duration=60){
-  const ps=JSON.parse(w.localStorage.getItem("swimlio_profiles"));
-  ps[0].level="Iniciación";ps[0].pool=pool;ps[0].goal="General";ps[0].daysPerWeek=3;
-  w.localStorage.setItem("swimlio_profiles",JSON.stringify(ps));
-  const hs=[];
-  for(let i=0;i<count;i++){
-    hs.push({id:"seed_"+i,profileId:ps[0].id,date:new Date(Date.now()-i*86400000).toISOString(),type:"Mixto",total:1000,actualMinutes:45,rating:"Bien",completed:true,level:"Iniciación",pool});
-  }
-  w.localStorage.setItem("swimlio_history",JSON.stringify(hs));
-  w.eval("profiles=safeParse(localStorage.getItem(KEYS.profiles),[]);history=safeParse(localStorage.getItem(KEYS.history),[]);normalizeProfiles();applyProfile();state.pool="+pool+";state.duration="+duration+";state.type='Mixto';state.focus='Auto';state.energy='Normal';lastWorkout=null;renderToday();");
+function setupBeginnerScenario(count,pool,duration){
+  const dom2=new JSDOM(html,{url:"https://ilbonix.github.io/swimlio/",runScripts:"outside-only",pretendToBeVisual:true});
+  const ww=dom2.window;
+  ww.confirm=()=>true;ww.alert=()=>{};
+  ww.navigator.share=async()=>{};
+  Object.defineProperty(ww.navigator,"serviceWorker",{value:{register:async()=>({})},configurable:true});
+  const pid="qa_beginner";
+  ww.localStorage.setItem("swimlio_profiles",JSON.stringify([{id:pid,name:"QA Beginner",level:"Iniciación",pool,mode:"Solo",pace100:120,people:1,lanes:1,goal:"General",daysPerWeek:3}]));
+  ww.localStorage.setItem("swimlio_active_profile",pid);
+  const hs=Array.from({length:count},(_,i)=>({id:"seed_"+i,profileId:pid,date:new Date(Date.now()-i*86400000).toISOString(),type:"Mixto",total:1000,actualMinutes:45,rating:"Bien",completed:true,level:"Iniciación",pool}));
+  ww.localStorage.setItem("swimlio_history",JSON.stringify(hs));
+  ww.eval(app);
+  const durationBtn=[...ww.document.querySelectorAll("#durationChoices button")].find(b=>b.dataset.v===String(duration));
+  assert.ok(durationBtn,"Duration button missing: "+duration);
+  durationBtn.click();
+  return {dom2,ww};
 }
-function inspectGenerated(){
-  click(w,"#generate");
-  const raw=w.eval("JSON.stringify(lastWorkout)");
-  return JSON.parse(raw);
-}
-function allRows(workout){return workout.blocks.flatMap(b=>b.rows)}
-function assertWorkoutRules(workout,{stage,pool,duration}){
+function inspectRenderedBeginner(ww,{stage,pool,duration}){
+  click(ww,"#generate");
+  const total=generatedMeters(ww);
   const limits={30:[600,900],45:[850,1200],60:[1100,1600],75:[1300,1800],90:[1500,2000]}[duration];
-  assert.ok(workout.total>=limits[0]&&workout.total<=limits[1],stage+" "+duration+"m total out of bounds: "+workout.total);
-  for(const r of allRows(workout)){
-    if(r.distance)assert.equal(r.distance%pool,0,stage+" repetition not divisible by pool: "+r.distance);
-    if(r.sequence)for(const d of r.sequence)assert.equal(d%pool,0,stage+" ladder distance not divisible by pool: "+d);
-    if(stage==="inicio"){
-      assert.ok(!r.distance||r.distance<=150,"First 3 beginner sessions must cap repetitions at 150 m, got "+r.distance);
-      if(r.distance===150)assert.ok(r.reps<=2,"Beginner start must cap 150 m at 2 reps");
-      if(r.distance===100)assert.ok(r.reps<=4,"Beginner start must cap 100 m at 4 reps");
-      if(r.sequence)assert.ok(Math.max(...r.sequence)<=100,"Beginner start ladder must cap at 100 m");
-    }else if(stage==="adaptacion"){
-      assert.ok(!r.distance||r.distance<=200,"Beginner adaptation rep over 200 m");
-      if(r.distance===200)assert.ok(r.reps<=1,"Beginner adaptation must not repeat 200 m");
+  assert.ok(total>=limits[0]&&total<=limits[1],stage+" "+duration+" min total out of bounds: "+total);
+  const prescriptions=[...ww.document.querySelectorAll(".prescription")].map(x=>x.textContent.trim());
+  assert.ok(prescriptions.length>0,"No prescriptions rendered");
+  for(const p of prescriptions){
+    const nums=[...p.matchAll(/(\d+)\s*m/g)].map(m=>Number(m[1]));
+    const rep=p.match(/^(\d+)\s*[×x]\s*(\d+)\s*m/i);
+    if(rep){
+      const reps=Number(rep[1]),dist=Number(rep[2]);
+      assert.equal(dist%pool,0,stage+" repetition not divisible by pool: "+p);
+      if(stage==="inicio"){
+        assert.ok(dist<=150,"First 3 beginner sessions must cap repetitions at 150 m: "+p);
+        if(dist===150)assert.ok(reps<=2,"Beginner start must cap 150 m at 2 reps: "+p);
+        if(dist===100)assert.ok(reps<=4,"Beginner start must cap 100 m at 4 reps: "+p);
+      }else if(stage==="adaptacion"){
+        assert.ok(dist<=200,"Beginner adaptation rep over 200 m: "+p);
+        if(dist===200)assert.ok(reps<=1,"Beginner adaptation must not repeat 200 m: "+p);
+      }else{
+        assert.ok(dist<=200,"Consolidated beginner rep over 200 m: "+p);
+        if(dist===200)assert.ok(reps<=2,"Consolidated beginner must cap 200 m at 2 reps: "+p);
+      }
     }else{
-      assert.ok(!r.distance||r.distance<=200,"Consolidated beginner rep over 200 m");
-      if(r.distance===200)assert.ok(r.reps<=2,"Consolidated beginner must cap 200 m at 2 reps");
+      for(const dist of nums){
+        assert.equal(dist%pool,0,stage+" ladder distance not divisible by pool: "+p);
+        if(stage==="inicio")assert.ok(dist<=100,"Beginner start ladder must cap at 100 m: "+p);
+        else assert.ok(dist<=200,"Beginner ladder over 200 m: "+p);
+      }
     }
   }
 }
 for(const pool of [25,50]){
   for(const duration of [30,45,60,75,90]){
     for(const cfg of [{count:0,stage:"inicio"},{count:4,stage:"adaptacion"},{count:8,stage:"consolidado"}]){
-      resetToBeginnerSessionCount(cfg.count,pool,duration);
-      for(let n=0;n<20;n++)assertWorkoutRules(inspectGenerated(),{stage:cfg.stage,pool,duration});
+      const {dom2,ww}=setupBeginnerScenario(cfg.count,pool,duration);
+      for(let n=0;n<20;n++)inspectRenderedBeginner(ww,{stage:cfg.stage,pool,duration});
+      dom2.window.close();
     }
   }
 }
