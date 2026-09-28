@@ -211,6 +211,6 @@ for(const pool of [25,50]){
 }
 console.log("Beginner regression matrix: 600 generated workouts — PASS");
 
-console.log("SWIMLIO 4.5 QA PASS");
+console.log("SWIMLIO 4.5.1 QA PASS");
 console.log("Beginner 60-min generated volume:",total+" m");
 console.log("Core flows + adaptive plan + pause/skip + favorites/share + backup UI + 4-week history — PASS");
