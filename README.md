@@ -23,11 +23,11 @@ Current features include:
 - RPE-based intensity guidance
 - Exercise explanations for swimmers without technical knowledge
 - Session Mode for following the workout poolside
-- Workout history and post-session feedback
-- Adaptive workload based on previous sessions
+- Workout history, weekly metrics and post-session feedback
+- Adaptive workload based on previous sessions and daily readiness
 - Optional equipment selection for each workout
 - Offline-capable Progressive Web App (PWA)
-- Mobile-first interface designed for iPhone and Android
+- Mobile-first interface designed for iPhone and Android\n- Weekly training planning\n- Resumable Session Mode with persistent progress and background-safe rest timers\n- Pace-aware workout duration and distance estimates
 
 ## Profile-first training
 
@@ -98,7 +98,7 @@ Cloud sync and optional accounts are planned for a future version.
 
 SWIMLIO is under active development.
 
-The current release is an early mobile release candidate intended for real-world testing before native Android and iOS packaging.
+The current release is **SWIMLIO 4.0**, a mobile-first PWA intended for real-world pool testing before native Android and iOS packaging.
 
 ### Planned improvements
 
