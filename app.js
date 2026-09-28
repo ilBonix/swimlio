@@ -270,32 +270,48 @@ function enforceVolumeBounds(blocks,target){
   const max=Math.min(hardMax,target+tolerance);
   const min=Math.max(hardMin,target-tolerance);
   const recalc=()=>blocks.forEach(b=>b.meters=b.rows.reduce((a,r)=>a+r.total,0));
+  const total=()=>blocks.reduce((a,b)=>a+b.meters,0);
   recalc();
-  let total=()=>blocks.reduce((a,b)=>a+b.meters,0),guard=0;
+
+  let guard=0;
   const order=["speed","main","tech","warm","cool"];
-  while(total()>max&&guard++<200){
+  while(total()>max&&guard++<300){
     let changed=false;
     for(const cat of order){
       const b=blocks.find(x=>x.cat===cat);if(!b)continue;
       for(let i=b.rows.length-1;i>=0;i--){
         const r=b.rows[i];
         if(r.sequence)continue;
-        if(r.reps>1){r.reps--;r.total-=r.distance;changed=true;break}
-        if(r.reps===1&&r.distance>state.pool){r.distance-=state.pool;r.total-=state.pool;changed=true;break}
+        if(r.reps>1&&total()-r.distance>=min){
+          r.reps--;r.total-=r.distance;changed=true;break;
+        }
+        if(r.reps===1&&r.distance>state.pool&&total()-state.pool>=min){
+          r.distance-=state.pool;r.total-=state.pool;changed=true;break;
+        }
       }
       if(changed)break;
     }
     if(!changed)break;
     recalc();
   }
+
   guard=0;
   while(total()<min&&guard++<100){
+    const need=min-total();
     const b=blocks.find(x=>x.cat==="main")||blocks.find(x=>x.cat==="tech")||blocks[0];
-    const r=b?.rows?.find(x=>!x.sequence);
-    if(!r)break;
-    r.reps++;r.total+=r.distance;recalc();
-    if(total()>max){r.reps--;r.total-=r.distance;recalc();break}
+    if(!b)break;
+    const reps=Math.min(8,Math.max(1,Math.ceil(need/state.pool)));
+    const drill=pick(eligibleDrills(b.cat).length?eligibleDrills(b.cat):eligibleDrills("main"));
+    const rpe=clamp((drill?.rpe||5)+ENERGY[state.energy].intensity,3,7);
+    const add=Math.min(reps*state.pool,hardMax-total());
+    const actualReps=Math.max(1,Math.floor(add/state.pool));
+    b.rows.push({
+      name:drill?.n||"Crol suave controlado",cat:b.cat,distance:state.pool,reps:actualReps,total:actualReps*state.pool,
+      rpe,rest:restFor(b.cat,rpe),how:drill?.how||"Nada cómodo y con técnica limpia.",feel:drill?.feel||"Control y respiración estable.",gear:drill?.gear||[]
+    });
+    recalc();
   }
+
   return blocks.filter(b=>b.meters>0);
 }
 
