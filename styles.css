@@ -32,3 +32,9 @@ button,input,select{font:inherit}button{touch-action:manipulation}
 @media(min-width:760px){.navbar{position:sticky;top:12px;left:auto;bottom:auto;transform:none;width:100%;margin-bottom:14px}.todayGrid{display:grid;grid-template-columns:.85fr 1.15fr;gap:14px;align-items:start}.wrap{padding-bottom:40px}}
 @media(max-width:520px){.appHeader{min-height:165px}.wrap{margin-top:-46px;padding-left:10px;padding-right:10px}.card{border-radius:21px;padding:15px}.metrics{grid-template-columns:1fr 1fr}.metrics .metric:first-child{grid-column:span 2}.formGrid{grid-template-columns:1fr}.headline{font-size:23px}.sessionPrescription{font-size:39px}.historyStats{grid-template-columns:1fr 1fr}.historyStats>div:first-child{grid-column:span 2}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+.noteField{display:block;text-align:left;font-size:12px;font-weight:850;color:#35566a;margin:14px 0}.noteField textarea{width:100%;margin-top:7px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);resize:vertical}
+button:disabled{opacity:.48;cursor:not-allowed}
+.sessionCard .ghost.full{min-height:50px}
+.planDay.pending{border-style:dashed}
+.backupHint{font-size:11px;color:var(--mut);margin-top:8px}
