@@ -1,6 +1,6 @@
 "use strict";
 
-const VERSION="4.5";
+const VERSION="4.5.1";
 const KEYS={
   profiles:"swimlio_profiles",
   active:"swimlio_active_profile",
