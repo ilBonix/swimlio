@@ -68,6 +68,10 @@ click(w,"#generate");
 noDuplicateIds(w,"Generated workout");
 const total=generatedMeters(w);
 assert.ok(total>=1100&&total<=1600,"Beginner 60-min volume out of bounds: "+total+" m");
+const firstWorkoutText=w.document.querySelector("#workoutMount")?.textContent||"";
+assert.ok(!/3\s*[×x]\s*200\s*m/i.test(firstWorkoutText),"First beginner workout must never contain 3x200 m");
+assert.ok(!/\b200\s*m\b/.test(firstWorkoutText),"First beginner workout must not prescribe 200 m repetitions");
+
 
 click(w,"#favoriteWorkout");
 assert.equal(JSON.parse(w.localStorage.getItem("swimlio_favorites")).length,1,"Favorite not persisted");
