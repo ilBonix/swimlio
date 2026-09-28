@@ -1,12 +1,13 @@
 "use strict";
 
-const VERSION="4.0";
+const VERSION="4.5";
 const KEYS={
   profiles:"swimlio_profiles",
   active:"swimlio_active_profile",
   history:"swimlio_history",
   plans:"swimlio_week_plans",
-  session:"swimlio_active_session"
+  session:"swimlio_active_session",
+  favorites:"swimlio_favorites"
 };
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -25,6 +26,7 @@ let profiles=safeParse(localStorage.getItem(KEYS.profiles),[]);
 let activeProfileId=localStorage.getItem(KEYS.active)||null;
 let history=safeParse(localStorage.getItem(KEYS.history),[]);
 let plans=safeParse(localStorage.getItem(KEYS.plans),{});
+let favorites=safeParse(localStorage.getItem(KEYS.favorites),[]);
 let activeProfile=null;
 let lastWorkout=null;
 let toastTimer=null;
@@ -34,6 +36,7 @@ const state={type:"Mixto",duration:60,focus:"Auto",energy:"Normal",gear:[],mode:
 function saveProfiles(){localStorage.setItem(KEYS.profiles,JSON.stringify(profiles));activeProfileId?localStorage.setItem(KEYS.active,activeProfileId):localStorage.removeItem(KEYS.active)}
 function saveHistory(){localStorage.setItem(KEYS.history,JSON.stringify(history.slice(0,200)))}
 function savePlans(){localStorage.setItem(KEYS.plans,JSON.stringify(plans))}
+function saveFavorites(){localStorage.setItem(KEYS.favorites,JSON.stringify(favorites.slice(0,30)))}
 function toast(msg){const el=$("#toast");el.textContent=msg;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2200)}
 function go(view){$$(".navbar button").forEach(b=>b.classList.toggle("on",b.dataset.view===view));$$(".view").forEach(v=>v.classList.add("hiddenView"));$("#"+view+"View").classList.remove("hiddenView");if(view==="today")renderToday();if(view==="plan")renderPlan();if(view==="history")renderHistory();if(view==="profiles")renderProfiles()}
 $$(".navbar button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.view)));
@@ -41,7 +44,8 @@ $$(".navbar button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.view
 function normalizeProfiles(){
   profiles=profiles.filter(p=>p&&p.id).map(p=>({
     id:p.id,name:p.name||"Mi perfil",level:p.level||"Iniciación",pool:+p.pool||25,
-    mode:p.mode||"Solo",pace100:+p.pace100||null,people:+p.people||8,lanes:+p.lanes||2
+    mode:p.mode||"Solo",pace100:+p.pace100||null,people:+p.people||8,lanes:+p.lanes||2,
+    goal:p.goal||"General",daysPerWeek:clamp(+p.daysPerWeek||3,2,5)
   }));
   if(activeProfileId&&!profiles.some(p=>p.id===activeProfileId))activeProfileId=null;
   if(!activeProfileId&&profiles.length===1)activeProfileId=profiles[0].id;
@@ -81,6 +85,23 @@ const ENERGY={
   "Normal":{volume:1,intensity:0,label:"Carga normal"},
   "Con energía":{volume:1.06,intensity:1,label:"Puedes apretar un poco más"}
 };
+const GOALS={
+  "General":{volume:1,plan:["Técnica","Resistencia","Mixto","Velocidad"]},
+  "Mejorar resistencia":{volume:1.04,plan:["Resistencia","Técnica","Resistencia","Mixto"]},
+  "Mejorar velocidad":{volume:.98,plan:["Técnica","Velocidad","Mixto","Velocidad"]},
+  "Mejorar técnica":{volume:.96,plan:["Técnica","Mixto","Técnica","Resistencia"]},
+  "Volver a entrenar":{volume:.90,plan:["Técnica","Mixto","Resistencia","Técnica"]}
+};
+function recentAdaptation(){
+  if(!activeProfileId)return 1;
+  const recent=history.filter(h=>h.profileId===activeProfileId).slice(0,5);
+  if(!recent.length)return 1;
+  const hard=recent.filter(h=>["Difícil","Demasiado"].includes(h.rating)||h.completed===false).length;
+  const easy=recent.filter(h=>h.rating==="Muy fácil"&&h.completed!==false).length;
+  if(hard>=2)return .92;
+  if(easy>=3)return 1.04;
+  return 1;
+}
 const TYPE_PROFILES={
   "Técnica":{warm:.17,tech:.36,main:.27,speed:.08,cool:.12},
   "Resistencia":{warm:.14,tech:.12,main:.56,speed:.08,cool:.10},
@@ -137,7 +158,9 @@ function targetMeters(){
   const energyFactor=ENERGY[state.energy].volume;
   const midpoint=(limits[0]+limits[1])/2;
   const paceAdjusted=midpoint+(paceBased-midpoint)*0.35;
-  const energyAdjusted=paceAdjusted*energyFactor;
+  const goalFactor=(GOALS[activeProfile.goal]||GOALS.General).volume;
+  const adaptiveFactor=recentAdaptation();
+  const energyAdjusted=paceAdjusted*energyFactor*goalFactor*adaptiveFactor;
   return roundTo(clamp(energyAdjusted,limits[0],limits[1]),state.pool);
 }
 function eligibleDrills(cat){
@@ -235,7 +258,8 @@ function generateWorkout(){
     id:"w_"+Date.now(),createdAt:nowISO(),profileId:activeProfileId,profileName:activeProfile.name,
     level:activeProfile.level,pool:state.pool,mode:state.mode,people:state.people,lanes:state.lanes,
     type:state.type,durationTarget:state.duration,energy:state.energy,focus:state.focus,gear:[...state.gear],
-    usedGear,total:actual,blocks,transitions,estimatedSeconds:Math.round(timing.total),pace100:profilePace()
+    usedGear,total:actual,blocks,transitions,estimatedSeconds:Math.round(timing.total),pace100:profilePace(),
+    goal:activeProfile.goal||"General",adaptation:recentAdaptation()
   };
 }
 
@@ -247,7 +271,7 @@ function renderToday(){
     $("#firstProfile").onclick=()=>go("profiles");return;
   }
   root.innerHTML=`
-  <div class="profileHero"><div><b>${esc(activeProfile.name)}</b><br><small>${esc(activeProfile.level)} · ${state.mode==="Grupo"?esc(state.people+" nadadores · "+state.lanes+" calles · "):""}${state.pool} m · ritmo ${profilePace()} s/100 m</small></div><button class="ghost" id="editProfileQuick">Editar</button></div>
+  <div class="profileHero"><div><b>${esc(activeProfile.name)}</b><br><small>${esc(activeProfile.level)} · ${state.mode==="Grupo"?esc(state.people+" nadadores · "+state.lanes+" calles · "):""}${state.pool} m · ${esc(activeProfile.goal||"General")} · ${activeProfile.daysPerWeek||3} días/sem.</small></div><button class="ghost" id="editProfileQuick">Editar</button></div>
   <div class="todayGrid">
     <div class="card">
       <div class="cardTitle">Entrenamiento inteligente</div><h1 class="headline">¿Qué hacemos hoy?</h1>
@@ -306,11 +330,29 @@ function renderWorkout(){
     <div class="simpleNote">La duración ya incluye descansos entre repeticiones, transiciones entre bloques y tiempo de organización. Intensidad expresada con RPE de 1 a 10.</div>
     ${w.blocks.map((b,i)=>`<div class="block"><div class="blockHead"><span>${esc(b.name)}</span><span>${b.meters} m</span></div>${b.rows.map(exerciseHTML).join("")}</div>${i<w.transitions.length?`<div class="simpleNote">Descanso antes del siguiente bloque: <b>${w.transitions[i]} s</b></div>`:""}`).join("")}
     <button class="primary full" id="startWorkout">▶ Empezar entrenamiento</button>
-    <div class="actionRow"><button class="secondary" id="regenerate">↻ Generar otro</button><button class="ghost" id="addPlan">+ Semana</button></div>
+    <div class="actionRow"><button class="secondary" id="regenerate">↻ Generar otro</button><button class="ghost" id="favoriteWorkout">♡ Favorito</button></div>
+    <div class="actionRow"><button class="ghost" id="shareWorkout">Compartir</button><button class="ghost" id="addPlan">+ Semana</button></div>
   </div>`;
   $("#startWorkout").onclick=()=>startSession(w);
   $("#regenerate").onclick=()=>{lastWorkout=generateWorkout();renderWorkout()};
+  $("#favoriteWorkout").onclick=()=>{favorites.unshift({...w,id:"fav_"+Date.now(),savedAt:nowISO()});saveFavorites();toast("Entrenamiento guardado en favoritos")};
+  $("#shareWorkout").onclick=()=>shareWorkout(w);
   $("#addPlan").onclick=()=>{addWorkoutToNextPlanSlot(w.type,w.durationTarget);toast("Añadido a la planificación semanal")};
+}
+
+
+function workoutText(w){
+  const lines=["SWIMLIO · "+w.type+" · "+w.total+" m","Nivel: "+w.level+" · Piscina: "+w.pool+" m",""];
+  w.blocks.forEach(b=>{lines.push(b.name+" · "+b.meters+" m");b.rows.forEach(r=>lines.push("• "+(r.sequence?r.sequence.join("-")+" m":r.reps+"x"+r.distance+" m")+" · "+r.name+" · RPE "+r.rpe+"/10"));lines.push("")});
+  return lines.join("\n");
+}
+async function shareWorkout(w){
+  const text=workoutText(w);
+  try{
+    if(navigator.share){await navigator.share({title:"SWIMLIO · "+w.type,text});return}
+    if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);toast("Entrenamiento copiado");return}
+  }catch(e){if(e?.name==="AbortError")return}
+  toast("Compartir no está disponible en este dispositivo");
 }
 
 function flattenSession(w){
@@ -323,7 +365,7 @@ function flattenSession(w){
 }
 function startSession(w){
   const existing=safeParse(localStorage.getItem(KEYS.session),null);
-  const s={workout:w,items:flattenSession(w),index:0,startedAt:Date.now(),transitionEnd:null,completedMeters:0};
+  const s={workout:w,items:flattenSession(w),index:0,startedAt:Date.now(),transitionEnd:null,transitionRemaining:null,completedMeters:0,skipped:[],paused:false,pausedAt:null,pausedTotal:0};
   localStorage.setItem(KEYS.session,JSON.stringify(s));
   drawSession(s);
 }
@@ -334,6 +376,7 @@ function resumeSession(){
 function saveSession(s){localStorage.setItem(KEYS.session,JSON.stringify(s))}
 function drawSession(s){
   $("#overlayRoot").innerHTML="";
+  if(s.paused&&s.pausedAt==null)s.pausedAt=Date.now();
   const item=s.items[s.index];
   if(!item){showFinish(s);return}
   const pct=Math.round(s.index/s.items.length*100);
@@ -348,16 +391,28 @@ function drawSession(s){
     body=`<div class="sessionBlock">Transición · paso ${s.index+1}/${s.items.length}</div><div class="sessionTitle">Descanso entre bloques</div><div class="restTimer" id="restTimer"></div><div class="sessionInfo">Siguiente: <b>${esc(item.next)}</b><br>Bebe, reagrupa y prepara el siguiente bloque.</div>`;
   }
   const ov=document.createElement("div");ov.className="sessionOverlay";
-  ov.innerHTML=`<div class="sessionCard"><div class="sessionTop"><b>SWIMLIO · Modo sesión</b><button class="closeBtn" id="closeSession">✕</button></div>
+  ov.innerHTML=`<div class="sessionCard"><div class="sessionTop"><b>SWIMLIO · Modo sesión</b><div class="row"><button class="closeBtn" id="pauseSession">${s.paused?"▶":"Ⅱ"}</button><button class="closeBtn" id="closeSession">✕</button></div></div>
     <div class="progressTrack"><i style="width:${pct}%"></i></div><div class="sessionProgress"><span>${s.completedMeters} m hechos</span><span>${remaining} m restantes</span></div>
     ${body}
-    <div class="sessionButtons"><button class="secondary" id="prevSession">← Anterior</button><button class="primary" id="nextSession">${item.kind==="transition"?"Saltar / siguiente →":"✓ Hecho →"}</button></div>
+    ${item.kind==="exercise"?'<button class="ghost full" id="skipSession" style="margin-top:12px">Omitir este ejercicio</button>':""}
+    <div class="sessionButtons"><button class="secondary" id="prevSession">← Anterior</button><button class="primary" id="nextSession" ${s.paused?"disabled":""}>${item.kind==="transition"?"Saltar / siguiente →":"✓ Hecho →"}</button></div>
   </div>`;
   $("#overlayRoot").appendChild(ov);
   $("#closeSession").onclick=()=>$("#overlayRoot").innerHTML="";
-  $("#prevSession").onclick=()=>{if(s.index>0){const prev=s.items[s.index-1];if(prev?.kind==="exercise")s.completedMeters=Math.max(0,s.completedMeters-prev.meters);s.index--;s.transitionEnd=null;saveSession(s);drawSession(s)}};
-  $("#nextSession").onclick=()=>{if(item.kind==="exercise")s.completedMeters=Math.min(s.workout.total,s.completedMeters+item.meters);s.index++;s.transitionEnd=null;saveSession(s);drawSession(s)};
-  if(item.kind==="transition")runRestTimer(s);
+  $("#pauseSession").onclick=()=>{
+    if(!s.paused){
+      s.paused=true;s.pausedAt=Date.now();
+      if(item.kind==="transition"&&s.transitionEnd)s.transitionRemaining=Math.max(0,s.transitionEnd-Date.now());
+    }else{
+      const now=Date.now();s.paused=false;s.pausedTotal+=(now-(s.pausedAt||now));s.pausedAt=null;
+      if(item.kind==="transition"&&s.transitionRemaining!=null){s.transitionEnd=Date.now()+s.transitionRemaining;s.transitionRemaining=null}
+    }
+    saveSession(s);drawSession(s);
+  };
+  $("#prevSession").onclick=()=>{if(s.index>0){const prev=s.items[s.index-1];if(prev?.kind==="exercise"&&!s.skipped.includes(s.index-1))s.completedMeters=Math.max(0,s.completedMeters-prev.meters);s.index--;s.transitionEnd=null;saveSession(s);drawSession(s)}};
+  $("#skipSession")?.addEventListener("click",()=>{if(!s.skipped.includes(s.index))s.skipped.push(s.index);s.index++;s.transitionEnd=null;saveSession(s);drawSession(s)});
+  $("#nextSession").onclick=()=>{if(s.paused)return;if(item.kind==="exercise")s.completedMeters=Math.min(s.workout.total,s.completedMeters+item.meters);s.index++;s.transitionEnd=null;saveSession(s);drawSession(s)};
+  if(item.kind==="transition"&&!s.paused)runRestTimer(s);
 }
 let restTicker=null;
 function runRestTimer(s){
@@ -372,12 +427,14 @@ function runRestTimer(s){
 }
 function showFinish(s){
   clearInterval(restTicker);
-  const elapsed=Math.max(1,Math.round((Date.now()-s.startedAt)/60000));
+  const pauseNow=s.paused&&s.pausedAt?Date.now()-s.pausedAt:0;
+  const elapsed=Math.max(1,Math.round((Date.now()-s.startedAt-(s.pausedTotal||0)-pauseNow)/60000));
   $("#overlayRoot").innerHTML=`<div class="finishOverlay"><div class="finishCard">
     <div class="finishIcon">🏊</div><h2>Entrenamiento completado</h2><p class="muted">Buen trabajo. Guarda cómo ha ido para que SWIMLIO ajuste las próximas sesiones.</p>
     <div class="finishMetrics"><div><b>${s.completedMeters} m</b><br><small>realizados</small></div><div><b>${elapsed} min</b><br><small>tiempo real</small></div></div>
     <h3>¿Cómo te has sentido?</h3><div class="ratingGrid" id="finishRating">${["Muy fácil","Bien","Difícil","Demasiado"].map((x,i)=>`<button data-v="${x}">${["😴","🙂","🥵","☠️"][i]} ${x}</button>`).join("")}</div>
     <h3>¿Lo terminaste completo?</h3><div class="completeToggle" id="finishComplete"><button class="on" data-v="true">Sí</button><button data-v="false">No</button></div>
+    <label class="noteField">Nota opcional<textarea id="finishNote" rows="3" placeholder="Ej. Me costaron las últimas series..."></textarea></label>
     <button class="primary full" id="saveFinish" disabled>Guardar entrenamiento</button>
   </div></div>`;
   let rating=null,complete=true;
@@ -385,7 +442,7 @@ function showFinish(s){
   bindChoice("#finishComplete",v=>complete=v==="true");
   $("#saveFinish").onclick=()=>{
     const w=s.workout;
-    history.unshift({id:"h_"+Date.now(),profileId:w.profileId,date:nowISO(),type:w.type,total:s.completedMeters||w.total,plannedTotal:w.total,actualMinutes:elapsed,estimatedSeconds:w.estimatedSeconds,rating,completed:complete,level:w.level,energy:w.energy,pool:w.pool});
+    history.unshift({id:"h_"+Date.now(),profileId:w.profileId,date:nowISO(),type:w.type,total:s.completedMeters||w.total,plannedTotal:w.total,actualMinutes:elapsed,estimatedSeconds:w.estimatedSeconds,rating,completed:complete,level:w.level,energy:w.energy,pool:w.pool,note:$("#finishNote")?.value.trim()||"",skippedCount:(s.skipped||[]).length});
     saveHistory();localStorage.removeItem(KEYS.session);lastWorkout=null;$("#overlayRoot").innerHTML="";markPlanDoneForToday(w.type);toast("Entrenamiento guardado");go("history");
   };
 }
@@ -397,12 +454,21 @@ function weekDates(){
   const start=new Date(weekKey()+"T12:00:00");return Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(d.getDate()+i);return d});
 }
 function makeWeekPlan(){
-  const k=weekKey(),dates=weekDates();
-  const recent=history.filter(h=>h.profileId===activeProfileId).slice(0,4);
-  const hard=recent.filter(h=>["Difícil","Demasiado"].includes(h.rating)).length;
-  const types=hard>=2?["Técnica","Mixto","Resistencia"]:["Técnica","Resistencia","Mixto"];
-  const slots=[1,3,5];
-  plans[k]={profileId:activeProfileId,items:slots.map((di,i)=>({id:"p_"+Date.now()+"_"+i,date:dates[di].toISOString().slice(0,10),type:types[i],duration:i===1?60:45,done:false}))};
+  const k=weekKey(),dates=weekDates(),days=clamp(activeProfile?.daysPerWeek||3,2,5);
+  const recent=history.filter(h=>h.profileId===activeProfileId).slice(0,5);
+  const hard=recent.filter(h=>["Difícil","Demasiado"].includes(h.rating)||h.completed===false).length;
+  const base=(GOALS[activeProfile?.goal]||GOALS.General).plan;
+  const recovery=hard>=2;
+  const slotMap={2:[1,4],3:[1,3,5],4:[0,2,4,6],5:[0,1,3,4,6]};
+  const slots=slotMap[days]||slotMap[3];
+  const items=slots.map((di,i)=>{
+    let type=base[i%base.length];
+    if(recovery&&i===0)type="Técnica";
+    if(i>0&&["Velocidad","Resistencia"].includes(type)&&["Velocidad","Resistencia"].includes(base[(i-1)%base.length]))type="Mixto";
+    const duration=activeProfile.level==="Iniciación"?(i===1?60:45):(i%2?60:45);
+    return {id:"p_"+Date.now()+"_"+i,date:dates[di].toISOString().slice(0,10),type,duration,done:false};
+  });
+  plans[k]={profileId:activeProfileId,goal:activeProfile.goal||"General",items};
   savePlans();return plans[k];
 }
 function currentPlan(){const k=weekKey();const p=plans[k];return p?.profileId===activeProfileId?p:null}
@@ -418,7 +484,7 @@ function renderPlan(){
   const root=$("#planView");
   if(!activeProfile){root.innerHTML='<div class="card"><h2>Planificación semanal</h2><p class="muted">Selecciona un perfil primero.</p></div>';return}
   const p=currentPlan()||makeWeekPlan();
-  root.innerHTML=`<div class="card"><div class="cardTitle">Planificación</div><h1 class="headline">Esta semana</h1><p class="muted small">Una propuesta sencilla que se ajusta con el feedback de tus sesiones. Puedes usar cualquier sesión como punto de partida para Hoy.</p>
+  root.innerHTML=`<div class="card"><div class="cardTitle">Planificación adaptativa</div><h1 class="headline">Esta semana</h1><p class="muted small"><b>Objetivo:</b> ${esc(activeProfile.goal||"General")} · ${activeProfile.daysPerWeek||3} días. La distribución evita encadenar cargas altas y baja la exigencia si las últimas sesiones fueron difíciles o incompletas.</p>
     <div id="planItems">${p.items.sort((a,b)=>a.date.localeCompare(b.date)).map(i=>{const d=new Date(i.date+"T12:00:00");return `<div class="planDay ${i.done?"done":""}"><div class="dayBadge">${dayNames[d.getDay()]}<br>${d.getDate()}</div><div><b>${esc(i.type)}</b><br><small class="muted">${i.duration} min ${i.done?"· completado":""}</small></div><button class="ghost" data-planuse="${i.id}">${i.done?"Repetir":"Usar hoy"}</button></div>`}).join("")}</div>
     <div class="actionRow"><button class="secondary" id="regenPlan">↻ Rehacer semana</button><button class="ghost" id="clearPlan">Vaciar</button></div>
   </div>`;
@@ -438,13 +504,29 @@ function renderHistory(){
   const avg=week.length?Math.round(mins/week.length):0;
   const days=Array.from({length:7},(_,i)=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-(6-i));const k=d.toISOString().slice(0,10);return {date:d,label:dayNames[d.getDay()],m:mine.filter(h=>h.date?.slice(0,10)===k).reduce((a,h)=>a+(+h.total||0),0)}});
   const max=Math.max(1,...days.map(d=>d.m));
+  const fourWeeks=Array.from({length:4},(_,i)=>{
+    const end=Date.now()-i*7*86400000,start=end-7*86400000;
+    const hs=mine.filter(h=>{const t=new Date(h.date).getTime();return t>=start&&t<end});
+    return {label:"S"+(4-i),meters:hs.reduce((a,h)=>a+(+h.total||0),0),sessions:hs.length};
+  }).reverse();
+  const max4=Math.max(1,...fourWeeks.map(x=>x.meters));
+  const completed=mine.filter(h=>h.completed!==false).length;
+  const adherence=mine.length?Math.round(completed/mine.length*100):0;
+  const typeCounts=["Técnica","Resistencia","Velocidad","Mixto"].map(t=>[t,mine.filter(h=>h.type===t).length]);
   root.innerHTML=`<div class="card"><div class="cardTitle">Progreso</div><h1 class="headline">Historial</h1>
     <div class="historyStats"><div><b>${meters.toLocaleString("es-ES")} m</b><small>últimos 7 días</small></div><div><b>${week.length}</b><small>sesiones</small></div><div><b>${avg} min</b><small>media/sesión</small></div></div>
     <div class="barChart">${days.map(d=>`<div class="barCol"><div class="bar" style="height:${Math.max(3,d.m/max*90)}px" title="${d.m} m"></div><small>${d.label}</small></div>`).join("")}</div>
   </div>
+  <div class="card"><div class="cardTitle">Tendencia</div><h2 style="margin-top:4px">Últimas 4 semanas</h2>
+    <div class="historyStats"><div><b>${adherence}%</b><small>completadas</small></div><div><b>${mine.length}</b><small>sesiones totales</small></div><div><b>${typeCounts.sort((a,b)=>b[1]-a[1])[0]?.[0]||"—"}</b><small>tipo más frecuente</small></div></div>
+    <div class="barChart">${fourWeeks.map(x=>`<div class="barCol"><div class="bar" style="height:${Math.max(3,x.meters/max4*90)}px" title="${x.meters} m"></div><small>${x.label}</small></div>`).join("")}</div>
+  </div>
+  <div class="card"><h2 style="margin-top:0">Favoritos</h2>${favorites.filter(x=>x.profileId===activeProfileId).length?favorites.filter(x=>x.profileId===activeProfileId).slice(0,6).map(x=>`<div class="historyItem"><b>${esc(x.type)} · ${x.total} m</b><br><small class="muted">${x.durationTarget} min · ${new Date(x.savedAt||x.createdAt).toLocaleDateString("es-ES")}</small><div class="actionRow"><button class="ghost" data-use-favorite="${x.id}">Usar hoy</button><button class="dangerBtn" data-del-favorite="${x.id}">Eliminar</button></div></div>`).join(""):'<p class="muted">Aún no has guardado entrenamientos favoritos.</p>'}</div>
   <div class="card"><h2 style="margin-top:0">Sesiones</h2>${mine.length?mine.slice(0,30).map(h=>`<div class="historyItem"><div class="historyTop"><div><b>${esc(h.type)}</b><br><small class="muted">${new Date(h.date).toLocaleDateString("es-ES")} · ${h.total} m · ${h.actualMinutes||Math.round((h.estimatedSeconds||0)/60)} min</small></div><span class="tag">${esc(h.rating||"Sin valorar")}</span></div><div class="actionRow"><button class="ghost" data-edit-history="${h.id}">Editar</button><button class="dangerBtn" data-del-history="${h.id}">Eliminar</button></div></div>`).join(""):'<p class="muted">Todavía no hay sesiones guardadas.</p>'}</div>`;
   $$("[data-del-history]").forEach(b=>b.onclick=()=>{history=history.filter(h=>h.id!==b.dataset.delHistory);saveHistory();renderHistory()});
-  $$("[data-edit-history]").forEach(b=>b.onclick=()=>editHistory(b.dataset.editHistory));
+  $("[data-edit-history]").forEach(b=>b.onclick=()=>editHistory(b.dataset.editHistory));
+  $("[data-use-favorite]").forEach(b=>b.onclick=()=>{const fav=favorites.find(x=>x.id===b.dataset.useFavorite);if(fav){lastWorkout={...fav,id:"w_"+Date.now(),createdAt:nowISO()};state.type=fav.type;state.duration=fav.durationTarget||60;state.pool=fav.pool||activeProfile.pool;go("today");toast("Favorito cargado")}});
+  $("[data-del-favorite]").forEach(b=>b.onclick=()=>{favorites=favorites.filter(x=>x.id!==b.dataset.delFavorite);saveFavorites();renderHistory()});
 }
 function editHistory(id){
   const h=history.find(x=>x.id===id);if(!h)return;
@@ -455,18 +537,23 @@ function editHistory(id){
 
 function renderProfiles(){
   const root=$("#profilesView");
-  root.innerHTML=`<div class="card"><div class="cardTitle">Tu espacio</div><h1 class="headline">Perfiles</h1><p class="muted small">El perfil guarda datos estables: nivel, piscina, modo y ritmo de referencia. El material se elige solo cuando preparas la sesión.</p>
-    <div id="profileList">${profiles.length?profiles.map(p=>`<div class="profileCard ${p.id===activeProfileId?"active":""}"><b>${esc(p.name)}</b><br><small class="muted">${esc(p.level)} · ${p.pool} m · ${p.mode==="Solo"?"Individual":"Grupo"+(" · "+p.people+" nad. · "+p.lanes+" calles")}${p.pace100?" · "+p.pace100+" s/100 m":""}</small><div class="actions">${p.id!==activeProfileId?`<button class="secondary" data-use-profile="${p.id}">Usar</button>`:""}<button class="ghost" data-edit-profile="${p.id}">Editar</button><button class="dangerBtn" data-del-profile="${p.id}">Eliminar</button></div></div>`).join(""):'<p class="muted">Aún no hay perfiles.</p>'}</div>
+  root.innerHTML=`<div class="card"><div class="cardTitle">Tu espacio</div><h1 class="headline">Perfiles</h1><p class="muted small">El perfil guarda datos estables: nivel, piscina, modo, ritmo, objetivo y frecuencia semanal. El material se elige solo cuando preparas la sesión.</p>
+    <div id="profileList">${profiles.length?profiles.map(p=>`<div class="profileCard ${p.id===activeProfileId?"active":""}"><b>${esc(p.name)}</b><br><small class="muted">${esc(p.level)} · ${p.pool} m · ${p.mode==="Solo"?"Individual":"Grupo"+(" · "+p.people+" nad. · "+p.lanes+" calles")}${p.pace100?" · "+p.pace100+" s/100 m":""} · ${esc(p.goal||"General")} · ${p.daysPerWeek||3} días/sem.</small><div class="actions">${p.id!==activeProfileId?`<button class="secondary" data-use-profile="${p.id}">Usar</button>`:""}<button class="ghost" data-edit-profile="${p.id}">Editar</button><button class="dangerBtn" data-del-profile="${p.id}">Eliminar</button></div></div>`).join(""):'<p class="muted">Aún no hay perfiles.</p>'}</div>
     <button class="primary full" id="newProfile">+ Crear perfil</button>
+    <div class="actionRow"><button class="ghost" id="exportData">Exportar copia</button><button class="ghost" id="importData">Importar copia</button></div>
+    <input id="importFile" class="hidden" type="file" accept="application/json">
   </div>`;
   $$("[data-use-profile]").forEach(b=>b.onclick=()=>{activeProfileId=b.dataset.useProfile;saveProfiles();applyProfile();lastWorkout=null;renderProfiles();toast("Perfil activo cambiado")});
   $$("[data-edit-profile]").forEach(b=>b.onclick=()=>editProfile(b.dataset.editProfile));
   $$("[data-del-profile]").forEach(b=>b.onclick=()=>{const id=b.dataset.delProfile;if(!confirm("¿Eliminar este perfil y su historial?"))return;profiles=profiles.filter(p=>p.id!==id);history=history.filter(h=>h.profileId!==id);if(activeProfileId===id)activeProfileId=profiles[0]?.id||null;saveProfiles();saveHistory();applyProfile();renderProfiles()});
   $("#newProfile").onclick=()=>editProfile(null);
+  $("#exportData").onclick=exportBackup;
+  $("#importData").onclick=()=>$("#importFile").click();
+  $("#importFile").onchange=e=>importBackup(e.target.files?.[0]);
 }
 function editProfile(id){
   const p=id?profiles.find(x=>x.id===id):null;
-  const v=p||{name:"",level:"Iniciación",pool:25,mode:"Solo",pace100:"",people:8,lanes:2};
+  const v=p||{name:"",level:"Iniciación",pool:25,mode:"Solo",pace100:"",people:8,lanes:2,goal:"General",daysPerWeek:3};
   $("#overlayRoot").innerHTML=`<div class="modalOverlay"><div class="modalCard"><div class="sessionTop"><b>${p?"Editar":"Crear"} perfil</b><button class="closeBtn" id="closeProfileModal">✕</button></div>
     <div class="formGrid" style="margin-top:18px">
       <label>Nombre<input id="pfName" maxlength="30" value="${esc(v.name)}" placeholder="Ej. Ignacio"></label>
@@ -474,6 +561,8 @@ function editProfile(id){
       <label>Piscina habitual<select id="pfPool"><option value="25" ${+v.pool===25?"selected":""}>25 m</option><option value="50" ${+v.pool===50?"selected":""}>50 m</option></select></label>
       <label>Modo<select id="pfMode"><option value="Solo" ${v.mode==="Solo"?"selected":""}>Individual</option><option value="Grupo" ${v.mode==="Grupo"?"selected":""}>Grupo</option></select></label>
       <label>Ritmo cómodo 100 m (s)<input id="pfPace" type="number" min="60" max="300" value="${v.pace100||""}" placeholder="Opcional"></label>
+      <label>Objetivo<select id="pfGoal">${Object.keys(GOALS).map(x=>`<option ${v.goal===x?"selected":""}>${x}</option>`).join("")}</select></label>
+      <label>Días por semana<select id="pfDays">${[2,3,4,5].map(x=>`<option value="${x}" ${+v.daysPerWeek===x?"selected":""}>${x} días</option>`).join("")}</select></label>
       <label class="pfGroup">Nadadores<input id="pfPeople" type="number" min="1" max="40" value="${v.people||8}"></label>
       <label class="pfGroup">Calles<input id="pfLanes" type="number" min="1" max="10" value="${v.lanes||2}"></label>
     </div><p class="tiny muted">El ritmo es opcional. Si lo indicas, SWIMLIO lo usa para calcular mejor la distancia y la duración.</p><button class="primary full" id="saveProfileModal">Guardar perfil</button>
@@ -481,10 +570,28 @@ function editProfile(id){
   const toggleGroup=()=>$$(".pfGroup").forEach(x=>x.style.display=$("#pfMode").value==="Grupo"?"block":"none");toggleGroup();$("#pfMode").onchange=toggleGroup;
   $("#closeProfileModal").onclick=()=>$("#overlayRoot").innerHTML="";
   $("#saveProfileModal").onclick=()=>{
-    const data={name:$("#pfName").value.trim()||"Mi perfil",level:$("#pfLevel").value,pool:+$("#pfPool").value,mode:$("#pfMode").value,pace100:+$("#pfPace").value||null,people:+$("#pfPeople").value||8,lanes:+$("#pfLanes").value||2};
+    const data={name:$("#pfName").value.trim()||"Mi perfil",level:$("#pfLevel").value,pool:+$("#pfPool").value,mode:$("#pfMode").value,pace100:+$("#pfPace").value||null,people:+$("#pfPeople").value||8,lanes:+$("#pfLanes").value||2,goal:$("#pfGoal").value,daysPerWeek:+$("#pfDays").value||3};
     if(p)Object.assign(p,data);else{const n={id:"p_"+Date.now(),...data};profiles.push(n);activeProfileId=n.id}
     saveProfiles();applyProfile();lastWorkout=null;$("#overlayRoot").innerHTML="";renderProfiles();toast("Perfil guardado");
   };
+}
+
+
+function exportBackup(){
+  const payload={version:VERSION,exportedAt:nowISO(),profiles,activeProfileId,history,plans,favorites};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download="swimlio-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),500);toast("Copia de seguridad preparada");
+}
+async function importBackup(file){
+  if(!file)return;
+  try{
+    const data=JSON.parse(await file.text());
+    if(!Array.isArray(data.profiles)||!Array.isArray(data.history))throw new Error("Formato no válido");
+    profiles=data.profiles;history=data.history;plans=data.plans||{};favorites=data.favorites||[];activeProfileId=data.activeProfileId||profiles[0]?.id||null;
+    normalizeProfiles();saveHistory();savePlans();saveFavorites();applyProfile();lastWorkout=null;toast("Copia importada");renderProfiles();
+  }catch(e){toast("No se pudo importar la copia")}
 }
 
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){const s=safeParse(localStorage.getItem(KEYS.session),null);if($(".sessionOverlay")&&s)drawSession(s)}});
