@@ -1,4 +1,4 @@
-const CACHE="swimlio-v4-20260928";
+const CACHE="swimlio-v4-1-volume-fix";
 const CORE=["./","./index.html","./styles.css?v=4.0","./app.js?v=4.0","./manifest.webmanifest","./icon.svg"];
 self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)))});
 self.addEventListener("activate",e=>{e.waitUntil(Promise.all([self.clients.claim(),caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))]))});
