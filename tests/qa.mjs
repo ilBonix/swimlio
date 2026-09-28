@@ -210,6 +210,25 @@ for(const pool of [25,50]){
   }
 }
 console.log("Beginner regression matrix: 600 generated workouts — PASS");
+// Distribution check: a new beginner on 60 minutes must not stick to the ceiling.
+{
+  const {dom2,ww}=setupBeginnerScenario(0,25,60);
+  const totals=[];
+  for(let n=0;n<120;n++){
+    click(ww,"#generate");
+    totals.push(generatedMeters(ww));
+  }
+  const unique=[...new Set(totals)];
+  const min60=Math.min(...totals),max60=Math.max(...totals);
+  const avg60=totals.reduce((a,b)=>a+b,0)/totals.length;
+  assert.ok(unique.length>=5,"Beginner 60-min generation lacks meaningful distance variation: "+unique.join(","));
+  assert.ok(min60<=1200,"Beginner 60-min minimum is too high: "+min60);
+  assert.ok(max60<=1375,"First beginner 60-min maximum is too high: "+max60);
+  assert.ok(avg60<1300,"First beginner 60-min average is too high: "+avg60);
+  dom2.window.close();
+  console.log("Beginner 60-min distribution:",{min:min60,max:max60,avg:Math.round(avg60),unique:unique.length});
+}
+
 
 console.log("SWIMLIO 4.5.1 QA PASS");
 console.log("Beginner 60-min generated volume:",total+" m");
